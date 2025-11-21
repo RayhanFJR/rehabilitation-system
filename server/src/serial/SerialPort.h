@@ -9,12 +9,10 @@
 #include <vector>
 #include <boost/asio.hpp>
 
-using boost::asio::serial_port;
-using boost::asio::serial_port_base;
 using boost::asio::io_context;
 
 class SerialPort {
-    
+
 public:
     SerialPort(io_context& io_ctx);
     ~SerialPort();
@@ -54,7 +52,7 @@ public:
     void printPort();
     
 private:
-    serial_port serial;
+    boost::asio::serial_port serial;
     std::string port_name;
     
     // Buffer management
