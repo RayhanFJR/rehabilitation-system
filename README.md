@@ -7,7 +7,7 @@
 ## 📁 Folder Structure
 
 ```
-rehabilitation-system/
+3RPS_VISION/
 ├── README.md                          # Dokumentasi utama project
 ├── .gitignore                         # File git ignore
 │
