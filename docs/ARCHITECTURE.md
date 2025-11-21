@@ -1,6 +1,58 @@
-==========================================
-=========File: vision/src/main.py=========
-==========================================
+# System Architecture - Sistem Kontrol Rehabilitasi 3-RPS
+
+## 📋 Overview
+
+Sistem terintegrasi untuk kontrol robot rehabilitasi dengan 3 aktuator pneumatik paralel (3-RPS). Sistem terdiri dari 3 komponen utama yang bekerja bersama:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    HMI (User Interface)                      │
+│                    Modbus TCP Client                         │
+└────────────────────┬────────────────────────────────────────┘
+                     │ Modbus TCP
+┌────────────────────┴────────────────────────────────────────┐
+│           Control Server (C++ Linux/Windows)                │
+│  - Trajectory Management (3 trajectories)                   │
+│  - State Machine Controller                                 │
+│  - Multi-cycle Support                                      │
+│  - Real-time Animation                                      │
+└────────────────────┬────────────────────────────────────────┘
+                     │ Serial Port (115200 baud)
+┌────────────────────┴────────────────────────────────────────┐
+│              Arduino Firmware (3-axis Motor)                 │
+│  - Motor Control (3 DC motors + H-bridge)                   │
+│  - Adaptive CTC Control (Computed Torque)                   │
+│  - Sensor Reading (encoders, load cell, current)           │
+│  - Load-based Adaptive Scaling                              │
+└────────────────────┬────────────────────────────────────────┘
+                     │ I2C, Analog, Digital
+                     ↓
+            ┌────────────────────┐
+            │   Sensors/Motors   │
+            │  - 3x DC Motors    │
+            │  - 3x Encoders     │
+            │  - Load Cell HX711 │
+            │  - Current Sensors │
+            └────────────────────┘
+
+     OPTIONAL:
+┌─────────────────────────────────────────────────────────────┐
+│           Vision System (Python + MediaPipe)                │
+│  - Pose Estimation                                          │
+│  - Foot Angle Calculation                                   │
+│  - PID-based Compensation                                   │
+│  - Real-time Feedback                                       │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🏗️ Component Architecture
+
+### 1. **Vision System (Python)**
+**File:** `vision/src/main.py`
+
+```
 PoseEstimator (MediaPipe)
     ├─ Detect 33 body landmarks
     ├─ Extract knee, ankle, foot positions
@@ -23,18 +75,23 @@ Main Loop (30 FPS):
     4. Apply PID control
     5. Display on screen
     6. Log data
+```
 
+**Configuration:**
+```python
 ANGLE_OFFSET = -35      # Calibration offset
 TARGET_ANGLE = 90       # Target angle for PID
 PID Gains: Kp=0.5, Ki=0.05, Kd=0.1
+```
 
+---
 
+### 2. **Arduino Firmware (Motor Control)**
+**File:** `firmware/src/main.cpp`
 
-===========================================
-=======File: firmware/src/main.cpp=========
-===========================================
+#### **Control Architecture:**
 
-Control Architecture:
+```
 Serial Command Input
     ├─ "S..." = Trajectory command (forward)
     ├─ "R..." = Retreat command (backward with scaling)
@@ -90,7 +147,11 @@ ADAPTIVE CONTROL (Optional):
     ├─ Update control law in real-time
     ├─ Improve tracking performance
     └─ Reduce overshoot
-Load-Based Adaptive Scaling:
+```
+
+#### **Load-Based Adaptive Scaling:**
+
+```
 Load Monitoring:
     if load < threshold1 (20 N):
         → Normal operation, load_scale = 1.0
@@ -103,7 +164,11 @@ Load Monitoring:
         → High load, load_scale = 0.15
         → Reduced Kp (damping applied)
         → Motor speed reduced to 15% of max
-Motor Parameters:
+```
+
+#### **Motor Parameters:**
+
+```
 Each Motor (1, 2, 3):
 
 OUTER LOOP GAINS (Position Control):
@@ -122,7 +187,11 @@ HARDWARE:
     Position Scale: 0.245 (encoder to mm)
     Manual Speed: 125 PWM
     Retreat Speed: 150 PWM (scaled by 1.5x)
-Retreat Mechanism:
+```
+
+#### **Retreat Mechanism:**
+
+```
 Forward Motion → Load Cell detects high load
     │
     ├─ if load > threshold2:
@@ -139,15 +208,16 @@ Forward Motion → Load Cell detects high load
        ├─ Scale velocity by RETREAT_VELOCITY_SCALE (1.5x)
        ├─ Execute backward motion
        └─ When done, send "ACK_RETREAT_COMPLETE"
+```
 
+---
 
+### 3. **Control Server (C++)**
+**File:** `server/src/main.cpp`
 
+#### **Server Architecture:**
 
-===========================================
-=========File: server/src/main.cpp=========
-===========================================
-
-Server Architecture:
+```
 Modbus TCP Server (Port 5020)
     ├─ Listen for HMI connections
     ├─ Receive button presses from HMI
@@ -262,7 +332,11 @@ Serial Communication with Arduino:
         ├─ "load:..." = Load cell value
         ├─ "pos:..." = Motor positions
         └─ Frequency: 10 Hz (every 100ms)
-Data Flow - HMI Animation:
+```
+
+#### **Data Flow - HMI Animation:**
+
+```
 Trajectory Data Loaded:
 ├─ Copy trajectory points to HMI registers
 ├─ HMI displays full trajectory as blue line
@@ -275,15 +349,15 @@ During Execution:
 │  ├─ Increment NUM_OF_DATA_CH1 counter
 │  └─ HMI shows green dot following blue line
 └─ Real-time animation feedback
+```
 
+---
 
+## 🔌 Hardware Integration
 
+### Arduino Pin Mapping:
 
-==========================================
-==========Hardware Integration============
-==========================================
-
-Arduino Pin Mapping:
+```
 Motor Control:
     Motor 1: RPWM=3, LPWM=5 (PWM pins for H-bridge)
     Motor 2: RPWM=6, LPWM=9
@@ -297,7 +371,11 @@ Current Sensing:
 
 Load Cell:
     DOUT=12, CLK=13 (SPI-like communication)
-Sensor Data Processing:
+```
+
+### Sensor Data Processing:
+
+```
 Load Cell (HX711):
     ├─ Read 24-bit ADC value
     ├─ Subtract calibration offset
@@ -316,14 +394,13 @@ Current Sensors:
     ├─ Average 3 samples
     ├─ Normalize: current = analog_val / 1023
     └─ Used for current loop feedback
+```
 
+---
 
+## 📊 Control Flow Diagram
 
-
-==========================================
-==========Control Flow Diagram============
-==========================================
-
+```
 START
   │
   ├─→ Load All Trajectory Data (3 trajectories)
@@ -352,3 +429,28 @@ START
             │   └─ Execute retreat sequence
             │
             └─ Repeat until shutdown
+```
+
+---
+
+## 🎯 Key Features
+
+✅ **Multi-Trajectory Support** - 3 different rehabilitation patterns  
+✅ **Adaptive Control** - Load-based motor speed adjustment  
+✅ **Cycle Counter** - Repeat therapy multiple times  
+✅ **Real-time Animation** - Visual feedback on HMI  
+✅ **Load Monitoring** - Automatic retreat on high load  
+✅ **Emergency Stop** - Safety feature  
+✅ **Modular Architecture** - Easy to maintain & extend  
+✅ **Adaptive CTC** - Advanced trajectory tracking  
+
+---
+
+## 🔧 Configuration & Tuning
+
+All tunable parameters in:
+- `firmware/src/config/constants.h` - Arduino constants
+- `server/src/config/config.h` - Server settings
+- `vision/src/config/settings.py` - Vision parameters
+
+No need to recompile for parameter changes - just edit config files!
