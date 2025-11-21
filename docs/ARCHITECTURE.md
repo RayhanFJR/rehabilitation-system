@@ -6,8 +6,8 @@ Sistem terintegrasi untuk kontrol robot rehabilitasi dengan 3 aktuator pneumatik
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    HMI (User Interface)                      │
-│                    Modbus TCP Client                         │
+│                    HMI (User Interface)                     │
+│                    Modbus TCP Client                        │
 └────────────────────┬────────────────────────────────────────┘
                      │ Modbus TCP
 ┌────────────────────┴────────────────────────────────────────┐
@@ -19,10 +19,10 @@ Sistem terintegrasi untuk kontrol robot rehabilitasi dengan 3 aktuator pneumatik
 └────────────────────┬────────────────────────────────────────┘
                      │ Serial Port (115200 baud)
 ┌────────────────────┴────────────────────────────────────────┐
-│              Arduino Firmware (3-axis Motor)                 │
+│              Arduino Firmware (3-axis Motor)                │
 │  - Motor Control (3 DC motors + H-bridge)                   │
 │  - Adaptive CTC Control (Computed Torque)                   │
-│  - Sensor Reading (encoders, load cell, current)           │
+│  - Sensor Reading (encoders, load cell, current)            │
 │  - Load-based Adaptive Scaling                              │
 └────────────────────┬────────────────────────────────────────┘
                      │ I2C, Analog, Digital
