@@ -92,6 +92,8 @@ private:
     static constexpr int POST_REHAB_DELAY_SEC = 5;
     static constexpr int CONTROLLER_INTERVAL_MS = 100;
     static constexpr int GRAFIK_INTERVAL_MS = 100;
+
+    std::chrono::steady_clock::time_point last_idle_print;
 };
 
 #endif  // STATE_HANDLERS_H
