@@ -3,7 +3,7 @@
 // FINAL VERSION - Complete implementation
 //==================================================================
 
-#include "SerialPort.h"
+#include "../serial/SerialPort.h"
 #include <iostream>
 #include <sstream>
 #include <algorithm>
