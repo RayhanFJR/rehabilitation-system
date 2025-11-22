@@ -1,6 +1,7 @@
 //==================================================================
 // FILE: server/src/state_machine/StateHandlers.cpp
 // Implementation of all state handlers
+// MODIFIED: Print IDLE message dengan interval 5 detik
 //==================================================================
 
 #include "StateHandlers.h"
@@ -10,6 +11,7 @@
 #include "../serial/SerialPort.h"
 #include <iostream>
 #include <thread>
+#include <chrono>
 
 StateHandlers::StateHandlers(ModbusServer* modbus,
                             DataHandler* data_handler,
@@ -18,7 +20,8 @@ StateHandlers::StateHandlers(ModbusServer* modbus,
     : modbus_server(modbus),
       data_handler(data_handler),
       trajectory_manager(traj_mgr),
-      serial_port(serial) {
+      serial_port(serial),
+      last_idle_print(std::chrono::steady_clock::now()) {  // Initialize
 }
 
 // ============ STATE 1: IDLE ============
@@ -26,7 +29,15 @@ StateHandlers::StateHandlers(ModbusServer* modbus,
 void StateHandlers::handleIdle(StateMachine& state_machine,
                               int& t_controller,
                               int& t_grafik) {
-    std::cout << "\n[State] IDLE - Waiting for user input" << std::endl;
+    
+    // Print IDLE message hanya setiap 5 detik (bukan setiap loop)
+    auto now = std::chrono::steady_clock::now();
+    if (std::chrono::duration_cast<std::chrono::seconds>(
+        now - last_idle_print).count() >= 5) {
+        
+        std::cout << "\n[State] IDLE - Waiting for user input" << std::endl;
+        last_idle_print = now;
+    }
     
     // Check for trajectory selection
     int selected_traj = data_handler->checkTrajectorySelection();

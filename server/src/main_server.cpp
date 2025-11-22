@@ -78,12 +78,7 @@ int main() {
         
         if (rc > 0) {
             modbus_server.sendReply(query, rc);
-        } else {
-        // Tambahkan delay agar tidak spam
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        }
-    
-        
+        } 
         
         // ========== STATE MACHINE ==========
         switch (state_machine.getState()) {
