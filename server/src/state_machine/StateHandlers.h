@@ -1,5 +1,5 @@
 //==================================================================
-// FILE: server/src/state_machine/StateHandlers.h
+// FILE: server/include/state_machine/StateHandlers.h
 // UPDATED: Added Arduino feedback reading methods
 //==================================================================
 
@@ -65,6 +65,8 @@ public:
     
     // Get Arduino state
     std::string getArduinoState() const { return arduino_state; }
+    bool isRetreatTriggered() const;
+    void clearRetreatTrigger();
 
 private:
     ModbusServer* modbus_server;
@@ -78,6 +80,7 @@ private:
     
     // Arduino state
     std::string arduino_state;
+    bool arduino_retreat_triggered;
 };
 
 #endif // STATE_HANDLERS_H

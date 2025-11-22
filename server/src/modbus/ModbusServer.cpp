@@ -179,3 +179,26 @@ void ModbusServer::writeCoil(int address, bool value) {
     
     mb_mapping->tab_bits[address] = value ? 1 : 0;
 }
+
+// ========== FLOAT HELPERS ==========
+// Menggunakan format modbus_set_float_dcba (sama dengan program asli)
+
+void ModbusServer::writeFloat(int address, float value) {
+    if (!mb_mapping || address < 0 || address + 1 >= NUM_HOLDING_REGISTERS) {
+        std::cerr << "[ModbusServer] Invalid float address: " << address << std::endl;
+        return;
+    }
+    
+    // Gunakan modbus_set_float_dcba untuk kompatibilitas dengan HMI
+    modbus_set_float_dcba(value, mb_mapping->tab_registers + address);
+}
+
+float ModbusServer::readFloat(int address) {
+    if (!mb_mapping || address < 0 || address + 1 >= NUM_HOLDING_REGISTERS) {
+        std::cerr << "[ModbusServer] Invalid float address: " << address << std::endl;
+        return 0.0f;
+    }
+    
+    // Gunakan modbus_get_float_dcba untuk membaca
+    return modbus_get_float_dcba(mb_mapping->tab_registers + address);
+}

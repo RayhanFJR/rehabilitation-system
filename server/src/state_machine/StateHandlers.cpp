@@ -22,7 +22,9 @@ StateHandlers::StateHandlers(ModbusServer* modbus,
       trajectory_manager(traj_mgr),
       serial_port(serial),
       last_idle_print(std::chrono::steady_clock::now()),
-      last_feedback_read(std::chrono::steady_clock::now()) {
+      last_feedback_read(std::chrono::steady_clock::now()),
+      arduino_state("running"),
+      arduino_retreat_triggered(false) {
 }
 
 // ========== ARDUINO FEEDBACK READER (DIPANGGIL SETIAP LOOP) ==========
@@ -44,52 +46,60 @@ void StateHandlers::readArduinoFeedback() {
 
 // ========== PARSER UNTUK DATA DARI ARDUINO ==========
 void StateHandlers::parseArduinoFeedback(const std::string& feedback) {
-    // Format expected from Arduino:
-    // "LC1:12.34,LC2:56.78,LC3:90.12,STATE:RUNNING"
-    // or "LC:12.34,56.78,90.12"
-    
-    std::istringstream iss(feedback);
-    std::string token;
+    // Format expected from Arduino (sama dengan program asli):
+    // - "RETREAT" - trigger retreat
+    // - "paused" / "running" / "retreating" - state
+    // - "load:12.34" - loadcell value
     
     try {
-        while (std::getline(iss, token, ',')) {
-            size_t colon_pos = token.find(':');
-            if (colon_pos != std::string::npos) {
-                std::string key = token.substr(0, colon_pos);
-                std::string value = token.substr(colon_pos + 1);
-                
-                // Parse loadcell values
-                if (key == "LC1") {
-                    float lc1 = std::stof(value);
-                    modbus_server->writeRegister(ModbusAddr::LOADCELL_1, 
-                                                static_cast<uint16_t>(lc1 * 100)); // Kirim dalam 0.01 unit
-                    std::cout << "[Arduino] LC1: " << lc1 << " N" << std::endl;
-                }
-                else if (key == "LC2") {
-                    float lc2 = std::stof(value);
-                    modbus_server->writeRegister(ModbusAddr::LOADCELL_2, 
-                                                static_cast<uint16_t>(lc2 * 100));
-                    std::cout << "[Arduino] LC2: " << lc2 << " N" << std::endl;
-                }
-                else if (key == "LC3") {
-                    float lc3 = std::stof(value);
-                    modbus_server->writeRegister(ModbusAddr::LOADCELL_3, 
-                                                static_cast<uint16_t>(lc3 * 100));
-                    std::cout << "[Arduino] LC3: " << lc3 << " N" << std::endl;
-                }
-                else if (key == "STATE") {
-                    arduino_state = value;
-                    std::cout << "[Arduino] State: " << value << std::endl;
-                }
-                else if (key == "ERROR") {
-                    std::cerr << "[Arduino] ERROR: " << value << std::endl;
-                }
-            }
+        // Check for RETREAT command
+        if (feedback.find("RETREAT") != std::string::npos) {
+            std::cout << "[Arduino] RETREAT command detected!" << std::endl;
+            arduino_retreat_triggered = true;
+        }
+        
+        // Check for state messages
+        if (feedback.find("paused") != std::string::npos) {
+            arduino_state = "paused";
+            std::cout << "[Arduino] State: paused" << std::endl;
+        } 
+        else if (feedback.find("running") != std::string::npos) {
+            arduino_state = "running";
+        } 
+        else if (feedback.find("retreating") != std::string::npos) {
+            arduino_state = "retreating";
+            std::cout << "[Arduino] State: retreating" << std::endl;
+        }
+        
+        // Parse load cell value: "load:12.34"
+        size_t load_pos = feedback.find("load:");
+        if (load_pos != std::string::npos) {
+            size_t value_start = load_pos + 5;  // length of "load:"
+            size_t value_end = feedback.find_first_of(",\n\r ", value_start);
+            
+            std::string load_str = feedback.substr(value_start, 
+                value_end == std::string::npos ? std::string::npos : value_end - value_start);
+            
+            float load_value = std::stof(load_str);
+            
+            // Write ke Modbus register sebagai float
+            modbus_server->writeFloat(ModbusAddr::REALTIME_LOAD_CELL, load_value);
+            
+            std::cout << "[Arduino] Load Cell: " << load_value << " N" << std::endl;
         }
     }
     catch (const std::exception& e) {
         std::cerr << "[Arduino] Parse error: " << e.what() << std::endl;
     }
+}
+
+// Getter untuk retreat trigger
+bool StateHandlers::isRetreatTriggered() const {
+    return arduino_retreat_triggered;
+}
+
+void StateHandlers::clearRetreatTrigger() {
+    arduino_retreat_triggered = false;
 }
 
 // ============ STATE 1: IDLE ============
