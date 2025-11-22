@@ -26,6 +26,7 @@ set(SOURCES
     src/modbus/DataHandler.cpp
     src/serial/SerialPort.cpp
     src/state_machine/StateMachine.cpp
+    src/state_machine/StateHandlers.cpp
 )
 
 # ====== BUILD EXECUTABLE ======
