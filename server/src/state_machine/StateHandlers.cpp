@@ -1,8 +1,8 @@
 #include "StateHandlers.h"
-#include "ModbusServer.h"
-#include "DataHandler.h"
-#include "TrajectoryManager.h"
-#include "SerialPort.h"
+#include "../modbus/ModbusServer.h"
+#include "../modbus/DataHandler.h"
+#include "../trajectory/TrajectoryManager.h"
+#include "../serial/SerialPort.h"
 #include <iostream>
 
 StateHandlers::StateHandlers(
