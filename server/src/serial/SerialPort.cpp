@@ -6,6 +6,9 @@
 #include "SerialPort.h"
 #include <iostream>
 #include <sstream>
+#include <algorithm>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 SerialPort::SerialPort(boost::asio::io_context& io_ctx)
     : io_context(io_ctx),

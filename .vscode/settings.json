@@ -4,7 +4,10 @@
         "-DVCPKG_MANIFEST_MODE=OFF"
     ],
     "files.associations": {
-        "ostream": "cpp"
+        "ostream": "cpp",
+        "deque": "cpp",
+        "string": "cpp",
+        "vector": "cpp"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

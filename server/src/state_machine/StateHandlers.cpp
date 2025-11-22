@@ -247,10 +247,6 @@ void StateHandlers::handleAutoRehab(StateMachine& state_machine,
             std::cout << "\n[AUTO_REHAB] Trajectory complete" << std::endl;
             serial_port->sendManualCommand('0');
             
-            // Update HMI cycle counter
-            modbus_server->writeRegister(ModbusAddr::CYCLE_COUNTER, 
-                                        state_machine.getCurrentCycle());
-            
             // Transition to POST_REHAB_DELAY
             state_machine.setState(SystemState::POST_REHAB_DELAY);
             state_machine.startDelayTimer();
