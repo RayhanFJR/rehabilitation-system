@@ -184,9 +184,6 @@ std::string SerialPort::readAvailable() {
     }
     
     try {
-        // Set non-blocking mode
-        serial.non_blocking(true);
-        
         // Try to read some data
         char buffer[256];
         boost::system::error_code ec;
