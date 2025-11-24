@@ -5,17 +5,17 @@ CXXFLAGS = -std=c++11 -Wall -O2
 LDFLAGS = -lboost_system -lmodbus -lpthread
 
 # Source files
-SOURCES = main.cpp \
-          TrajectoryData.cpp \
-          SerialCommunication.cpp \
-          ModbusHandler.cpp \
-          SystemController.cpp
+SOURCES = main_server.cpp \
+          TrajectoryManager.cpp \
+          SerialPort.cpp \
+          ModbusServer.cpp \
+          StateMachine.cpp
 
 # Object files
 OBJECTS = $(SOURCES:.cpp=.o)
 
 # Executable name
-TARGET = rehab_control
+TARGET = rehab_hmi
 
 # Default target
 all: $(TARGET)
