@@ -42,6 +42,11 @@ namespace TimingConfig {
     constexpr int POST_REHAB_DELAY_SEC = 5;
 }
 
+// Konfigurasi Path Data
+#define TRAJECTORY_1_PATH "trajectory_1/"
+#define TRAJECTORY_2_PATH "trajectory_2/"
+#define TRAJECTORY_3_PATH "trajectory_3/"
+
 // Konfigurasi Serial
 namespace SerialConfig {
     // Gunakan macro untuk string literals
@@ -91,5 +96,4 @@ namespace ModbusAddr {
     constexpr int X_DATA_CH1_START = 4000;
     constexpr int Y_DATA_CH1_START = 6000;
 }
-
 #endif // CONFIG_H
