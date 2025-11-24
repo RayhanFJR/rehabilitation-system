@@ -2,7 +2,7 @@
 // FILE: server/src/trajectory/TrajectoryManager.cpp - UPDATED
 // Updated dengan path management yang benar
 //==================================================================
-#include "TrajectoyManager.h"
+#include "TrajectoryManager.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
