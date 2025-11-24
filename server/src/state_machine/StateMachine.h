@@ -5,75 +5,89 @@
 #ifndef STATE_MACHINE_H
 #define STATE_MACHINE_H
 
+#include "TrajectoryData.h"
+#include "SerialCommunication.h"
+#include "ModbusHandler.h"
 #include <chrono>
-#include <string>
 
-// ============ STATE ENUMERATION ============
+//==================================================================
+// SYSTEM STATE
+//==================================================================
 enum class SystemState {
     IDLE,
     AUTO_REHAB,
-    AUTO_RETREAT,
     POST_REHAB_DELAY,
     EMERGENCY_STOP,
-    RESETTING
+    RESETTING,
+    AUTO_RETREAT
 };
 
-// ============ CLASS DEFINITION ============
-
-class StateMachine {
-    
+//==================================================================
+// CLASS SYSTEM CONTROLLER
+//==================================================================
+class SystemController {
 public:
-    StateMachine();
-    ~StateMachine();
+    SystemController(TrajectoryData& traj_data, 
+                    SerialCommunication& serial, 
+                    ModbusHandler& modbus);
     
-    // ========== STATE MANAGEMENT ==========
-    void setState(SystemState new_state);
-    SystemState getState();
-    std::string getStateString();
+    // Main control loop
+    void run();
     
-    // ========== CYCLE MANAGEMENT ==========
-    void startRehabCycle(int target_cycles);
-    void incrementCycle();
-    int getCurrentCycle();
-    int getTargetCycle();
-    bool hasCycleRemaining();
-    
-    // ========== TRAJECTORY INDEX ==========
-    void setTrajectoryIndex(int index);
-    void incrementTrajectoryIndex();
-    int getTrajectoryIndex();
-    
-    // ========== TIMING ==========
-    void startDelayTimer();
-    bool isDelayTimerExpired(int delay_seconds);
-    
-    // ========== FLAGS ==========
-    void setRetreatTriggered(bool value);
-    bool isRetreatTriggered();
-    
-    void setEmergencyFlag(bool value);
-    bool isEmergencyFlagSet();
-    
-    // ========== DEBUG ==========
-    void printState();
+    // State handlers
+    void handleIdleState();
+    void handleAutoRehabState();
+    void handleAutoRetreatState();
+    void handlePostRehabDelay();
+    void handleResettingState();
+    void handleEmergencyStop();
     
 private:
-    SystemState current_state;
-    SystemState previous_state;
+    // References
+    TrajectoryData& traj_data_;
+    SerialCommunication& serial_;
+    ModbusHandler& modbus_;
     
-    // Cycle tracking
-    int current_cycle;
-    int target_cycle;
+    // State
+    SystemState current_state_;
+    std::string arduino_feedback_state_;
     
-    // Trajectory tracking
-    int trajectory_index;
+    // Trajectory control
+    int t_controller_;
+    int t_grafik_;
+    bool animasi_grafik_;
+    int hmi_animation_counter_;
+    
+    // Retreat control
+    bool retreat_active_;
+    int retreat_index_;
+    int last_forward_index_;
+    bool message_send_;
+    
+    // Cycle control
+    int target_cycle_;
+    int current_cycle_;
+    
+    // Threshold tracking
+    int last_threshold1_;
+    int last_threshold2_;
     
     // Timing
-    std::chrono::steady_clock::time_point delay_start_time;
+    std::chrono::steady_clock::time_point last_tra_time_;
+    std::chrono::steady_clock::time_point last_grafik_time_;
+    std::chrono::steady_clock::time_point delay_start_time_;
     
-    // Flags
-    bool retreat_triggered;
-    bool emergency_flag;
+    // Helper functions
+    void handleManualControl();
+    void handleCalibration();
+    void handleTrajektoriSelection();
+    void updateThresholds();
+    void startRehabCycle();
+    void startRetreatSequence(int current_index);
+    void processRetreatSequence();
+    void processArduinoFeedback();
+    void processAutoRehab();
+    float parseValue(const std::string& data, const std::string& key);
 };
 
-#endif  // STATE_MACHINE_H
+#endif // STATE_MACHINE_H

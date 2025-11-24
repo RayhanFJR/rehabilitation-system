@@ -2,345 +2,212 @@
 // FILE: server/src/trajectory/TrajectoryManager.cpp - UPDATED
 // Updated dengan path management yang benar
 //==================================================================
-
-#include "TrajectoryManager.h"
-#include "../config/PathConfig.h"
+#include "TrajectoyManager.h"
+#include <iostream>
 #include <fstream>
 #include <sstream>
-#include <iostream>
-#include <filesystem>
 
-namespace fs = std::filesystem;
+using namespace std;
 
-TrajectoryManager::TrajectoryManager() {
-    active_trajectory = nullptr;
+TrajectoryData::TrajectoryData() {
+    // Inisialisasi default ke trajektori 1
+    trajektori_aktif = 1;
+    data_grafik_aktif = data_grafik_1;
+    referencePos1_aktif = referencePos1_T1;
+    referencePos2_aktif = referencePos2_T1;
+    referencePos3_aktif = referencePos3_T1;
+    referenceVelo1_aktif = referenceVelo1_T1;
+    referenceVelo2_aktif = referenceVelo2_T1;
+    referenceVelo3_aktif = referenceVelo3_T1;
+    referenceFc1_aktif = referenceFc1_T1;
+    referenceFc2_aktif = referenceFc2_T1;
+    referenceFc3_aktif = referenceFc3_T1;
     
-    trajectory1.trajectory_id = 1;
-    trajectory2.trajectory_id = 2;
-    trajectory3.trajectory_id = 3;
+    JUMLAH_TITIK_AKTIF = TrajectoryConfig::JUMLAH_TITIK_T1;
+    GRAFIK_START_INDEX = TrajectoryConfig::GRAFIK_START_INDEX_T1;
+    GRAFIK_END_INDEX = TrajectoryConfig::GRAFIK_END_INDEX_T1;
+    JUMLAH_TITIK_HMI = GRAFIK_END_INDEX - GRAFIK_START_INDEX;
+    GAIT_START_INDEX = TrajectoryConfig::GAIT_START_INDEX_T1;
+    GAIT_END_INDEX = TrajectoryConfig::GAIT_END_INDEX_T1;
+    JUMLAH_TITIK_GAIT = GAIT_END_INDEX - GAIT_START_INDEX;
 }
 
-TrajectoryManager::~TrajectoryManager() {
-    trajectory1.points.clear();
-    trajectory2.points.clear();
-    trajectory3.points.clear();
-}
-
-void TrajectoryManager::configureTrajectory1() {
-    trajectory1.total_points = 816;
-    trajectory1.gait_start_index = 1;
-    trajectory1.gait_end_index = 816;
-    trajectory1.graph_start_index = 1;
-    trajectory1.graph_end_index = 816;
-}
-
-void TrajectoryManager::configureTrajectory2() {
-    trajectory2.total_points = 1370;
-    trajectory2.gait_start_index = 1;
-    trajectory2.gait_end_index = 1370;
-    trajectory2.graph_start_index = 1;
-    trajectory2.graph_end_index = 1370;
-}
-
-void TrajectoryManager::configureTrajectory3() {
-    trajectory3.total_points = 1370;
-    trajectory3.gait_start_index = 1;
-    trajectory3.gait_end_index = 1370;
-    trajectory3.graph_start_index = 1;
-    trajectory3.graph_end_index = 1370;
-}
-
-bool TrajectoryManager::loadAllTrajectories() {
-    std::cout << "\n=== Loading All Trajectory Data ===" << std::endl;
+bool TrajectoryData::loadDataGrafik(const string& filename, float array[][2], int jumlah_titik) {
+    ifstream file(filename);
+    if (!file.is_open()) {
+        cerr << "Error: Tidak dapat membuka file " << filename << endl;
+        return false;
+    }
     
-    // Print path info
-    PathConfig::printPaths();
+    int count = 0;
+    string line;
+    while (getline(file, line) && count < jumlah_titik) {
+        stringstream ss(line);
+        string x_str, y_str;
+        
+        if (getline(ss, x_str, ',') && getline(ss, y_str, ',')) {
+            array[count][0] = stof(x_str);
+            array[count][1] = stof(y_str);
+            count++;
+        }
+    }
+    
+    file.close();
+    cout << "Loaded " << count << " data points from " << filename << endl;
+    return count == jumlah_titik;
+}
+
+bool TrajectoryData::loadDoubleArray(const string& filename, double* array, int size) {
+    ifstream file(filename);
+    if (!file.is_open()) {
+        cerr << "Error: Tidak dapat membuka file " << filename << endl;
+        return false;
+    }
+    
+    int count = 0;
+    string value;
+    while (file >> value && count < size) {
+        array[count++] = stod(value);
+    }
+    
+    file.close();
+    cout << "Loaded " << count << " values from " << filename << endl;
+    return count == size;
+}
+
+bool TrajectoryData::loadAllTrajectories() {
+    cout << "\n=== Loading All Trajectory Data ===" << endl;
     
     bool success = true;
     
-    // Configure
-    configureTrajectory1();
-    configureTrajectory2();
-    configureTrajectory3();
+    // Load Trajektori 1
+    cout << "\n[Trajektori 1 - " << TrajectoryConfig::JUMLAH_TITIK_T1 << " titik]" << endl;
+    success &= loadDataGrafik("data_1/grafik.txt", data_grafik_1, TrajectoryConfig::JUMLAH_TITIK_T1);
+    success &= loadDoubleArray("data_1/pos1.txt", referencePos1_T1, 818);
+    success &= loadDoubleArray("data_1/pos2.txt", referencePos2_T1, 818);
+    success &= loadDoubleArray("data_1/pos3.txt", referencePos3_T1, 818);
+    success &= loadDoubleArray("data_1/velo1.txt", referenceVelo1_T1, TrajectoryConfig::JUMLAH_TITIK_T1);
+    success &= loadDoubleArray("data_1/velo2.txt", referenceVelo2_T1, TrajectoryConfig::JUMLAH_TITIK_T1);
+    success &= loadDoubleArray("data_1/velo3.txt", referenceVelo3_T1, TrajectoryConfig::JUMLAH_TITIK_T1);
+    success &= loadDoubleArray("data_1/fc1.txt", referenceFc1_T1, TrajectoryConfig::JUMLAH_TITIK_T1);
+    success &= loadDoubleArray("data_1/fc2.txt", referenceFc2_T1, TrajectoryConfig::JUMLAH_TITIK_T1);
+    success &= loadDoubleArray("data_1/fc3.txt", referenceFc3_T1, TrajectoryConfig::JUMLAH_TITIK_T1);
     
-    // Load Trajectory 1
-    std::cout << "[Trajectory 1 - 816 points]" << std::endl;
-    success &= loadTrajectory(1, PathConfig::getDataDir());
+    // Load Trajektori 2
+    cout << "\n[Trajektori 2 - " << TrajectoryConfig::JUMLAH_TITIK_T2 << " titik]" << endl;
+    success &= loadDataGrafik("data_2/grafik.txt", data_grafik_2, TrajectoryConfig::JUMLAH_TITIK_T2);
+    success &= loadDoubleArray("data_2/pos1.txt", referencePos1_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
+    success &= loadDoubleArray("data_2/pos2.txt", referencePos2_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
+    success &= loadDoubleArray("data_2/pos3.txt", referencePos3_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
+    success &= loadDoubleArray("data_2/velo1.txt", referenceVelo1_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
+    success &= loadDoubleArray("data_2/velo2.txt", referenceVelo2_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
+    success &= loadDoubleArray("data_2/velo3.txt", referenceVelo3_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
+    success &= loadDoubleArray("data_2/fc1.txt", referenceFc1_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
+    success &= loadDoubleArray("data_2/fc2.txt", referenceFc2_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
+    success &= loadDoubleArray("data_2/fc3.txt", referenceFc3_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
     
-    // Load Trajectory 2
-    std::cout << "\n[Trajectory 2 - 1370 points]" << std::endl;
-    success &= loadTrajectory(2, PathConfig::getDataDir());
-    
-    // Load Trajectory 3
-    std::cout << "\n[Trajectory 3 - 1370 points]" << std::endl;
-    success &= loadTrajectory(3, PathConfig::getDataDir());
+    // Load Trajektori 3
+    cout << "\n[Trajektori 3 - " << TrajectoryConfig::JUMLAH_TITIK_T3 << " titik]" << endl;
+    success &= loadDataGrafik("data_3/grafik.txt", data_grafik_3, TrajectoryConfig::JUMLAH_TITIK_T3);
+    success &= loadDoubleArray("data_3/pos1.txt", referencePos1_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
+    success &= loadDoubleArray("data_3/pos2.txt", referencePos2_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
+    success &= loadDoubleArray("data_3/pos3.txt", referencePos3_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
+    success &= loadDoubleArray("data_3/velo1.txt", referenceVelo1_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
+    success &= loadDoubleArray("data_3/velo2.txt", referenceVelo2_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
+    success &= loadDoubleArray("data_3/velo3.txt", referenceVelo3_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
+    success &= loadDoubleArray("data_3/fc1.txt", referenceFc1_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
+    success &= loadDoubleArray("data_3/fc2.txt", referenceFc2_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
+    success &= loadDoubleArray("data_3/fc3.txt", referenceFc3_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
     
     if (success) {
-        std::cout << "\n=== All trajectory data loaded successfully ===" << std::endl;
-        switchTrajectory(1);
+        cout << "\n=== All trajectory data loaded successfully ===" << endl;
     } else {
-        std::cerr << "\n=== Error: Failed to load some trajectory data ===" << std::endl;
+        cerr << "\n=== Error: Failed to load some trajectory data ===" << endl;
     }
     
     return success;
 }
 
-bool TrajectoryManager::loadTrajectory(int trajectory_id, const std::string& data_dir) {
-    TrajectoryData* traj = getTrajectoryData(trajectory_id);
-    if (!traj) return false;
+void TrajectoryData::switchTrajectory(int traj_num) {
+    trajektori_aktif = traj_num;
     
-    // Build file paths
-    std::string traj_dir = data_dir + "/trajectory_" + std::to_string(trajectory_id);
-    
-    std::cout << "  Data directory: " << traj_dir << std::endl;
-    
-    // Check if directory exists
-    if (!fs::exists(traj_dir)) {
-        std::cerr << "  Error: Directory not found: " << traj_dir << std::endl;
-        return false;
-    }
-    
-    std::string pos1_file = traj_dir + "/pos1.txt";
-    std::string pos2_file = traj_dir + "/pos2.txt";
-    std::string pos3_file = traj_dir + "/pos3.txt";
-    std::string velo1_file = traj_dir + "/velo1.txt";
-    std::string velo2_file = traj_dir + "/velo2.txt";
-    std::string velo3_file = traj_dir + "/velo3.txt";
-    std::string fc1_file = traj_dir + "/fc1.txt";
-    std::string fc2_file = traj_dir + "/fc2.txt";
-    std::string fc3_file = traj_dir + "/fc3.txt";
-    std::string graph_file = traj_dir + "/grafik.txt";
-    
-    // Load points
-    if (!loadPointsFromFile(*traj, pos1_file) ||
-        !loadPointsFromFile(*traj, pos2_file) ||
-        !loadPointsFromFile(*traj, pos3_file) ||
-        !loadPointsFromFile(*traj, velo1_file) ||
-        !loadPointsFromFile(*traj, velo2_file) ||
-        !loadPointsFromFile(*traj, velo3_file) ||
-        !loadPointsFromFile(*traj, fc1_file) ||
-        !loadPointsFromFile(*traj, fc2_file) ||
-        !loadPointsFromFile(*traj, fc3_file)) {
-        return false;
-    }
-    
-    // Load graph data
-    if (!loadGraphData(*traj, graph_file)) {
-        return false;
-    }
-    
-    std::cout << "  ✓ Loaded Trajectory " << trajectory_id << ": " 
-              << traj->points.size() << " points" << std::endl;
-    
-    return true;
-}
-
-bool TrajectoryManager::loadPointsFromFile(TrajectoryData& traj, 
-                                          const std::string& filename) {
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        std::cerr << "  Error: Cannot open file " << filename << std::endl;
-        return false;
-    }
-    
-    // Resize points vector if needed
-    if (traj.points.empty()) {
-        traj.points.resize(traj.total_points);
-    }
-    
-    // Determine which parameter we're loading
-    std::string param_type;
-    if (filename.find("pos1") != std::string::npos) param_type = "pos1";
-    else if (filename.find("pos2") != std::string::npos) param_type = "pos2";
-    else if (filename.find("pos3") != std::string::npos) param_type = "pos3";
-    else if (filename.find("velo1") != std::string::npos) param_type = "velo1";
-    else if (filename.find("velo2") != std::string::npos) param_type = "velo2";
-    else if (filename.find("velo3") != std::string::npos) param_type = "velo3";
-    else if (filename.find("fc1") != std::string::npos) param_type = "fc1";
-    else if (filename.find("fc2") != std::string::npos) param_type = "fc2";
-    else if (filename.find("fc3") != std::string::npos) param_type = "fc3";
-    
-    // Load values
-    int count = 0;
-    std::string line;
-    while (std::getline(file, line) && count < traj.total_points) {
-        // Skip empty lines
-        if (line.empty()) continue;
+    if (traj_num == 1) {
+        data_grafik_aktif = data_grafik_1;
+        referencePos1_aktif = referencePos1_T1;
+        referencePos2_aktif = referencePos2_T1;
+        referencePos3_aktif = referencePos3_T1;
+        referenceVelo1_aktif = referenceVelo1_T1;
+        referenceVelo2_aktif = referenceVelo2_T1;
+        referenceVelo3_aktif = referenceVelo3_T1;
+        referenceFc1_aktif = referenceFc1_T1;
+        referenceFc2_aktif = referenceFc2_T1;
+        referenceFc3_aktif = referenceFc3_T1;
         
-        try {
-            float value = std::stof(line);
-            
-            if (param_type == "pos1") traj.points[count].pos1 = value;
-            else if (param_type == "pos2") traj.points[count].pos2 = value;
-            else if (param_type == "pos3") traj.points[count].pos3 = value;
-            else if (param_type == "velo1") traj.points[count].velo1 = value;
-            else if (param_type == "velo2") traj.points[count].velo2 = value;
-            else if (param_type == "velo3") traj.points[count].velo3 = value;
-            else if (param_type == "fc1") traj.points[count].fc1 = value;
-            else if (param_type == "fc2") traj.points[count].fc2 = value;
-            else if (param_type == "fc3") traj.points[count].fc3 = value;
-            
-            count++;
-        } catch (const std::exception& e) {
-            std::cerr << "  Warning: Could not parse line in " << filename 
-                     << ": " << line << std::endl;
-        }
-    }
-    
-    file.close();
-    
-    if (count != traj.total_points) {
-        std::cerr << "  Warning: Expected " << traj.total_points << " values, got " 
-                 << count << " from " << filename << std::endl;
-    }
-    
-    return count > 0;
-}
-
-bool TrajectoryManager::loadGraphData(TrajectoryData& traj, 
-                                     const std::string& filename) {
-    std::ifstream file(filename);
-    if (!file.is_open()) {
-        std::cerr << "  Error: Cannot open graph file " << filename << std::endl;
-        return false;
-    }
-    
-    traj.graph_x.clear();
-    traj.graph_y.clear();
-    
-    std::string line;
-    int count = 0;
-    while (std::getline(file, line)) {
-        // Skip empty lines
-        if (line.empty()) continue;
+        JUMLAH_TITIK_AKTIF = TrajectoryConfig::JUMLAH_TITIK_T1;
+        GRAFIK_START_INDEX = TrajectoryConfig::GRAFIK_START_INDEX_T1;
+        GRAFIK_END_INDEX = TrajectoryConfig::GRAFIK_END_INDEX_T1;
+        JUMLAH_TITIK_HMI = GRAFIK_END_INDEX - GRAFIK_START_INDEX;
+        GAIT_START_INDEX = TrajectoryConfig::GAIT_START_INDEX_T1;
+        GAIT_END_INDEX = TrajectoryConfig::GAIT_END_INDEX_T1;
+        JUMLAH_TITIK_GAIT = GAIT_END_INDEX - GAIT_START_INDEX;
+    } 
+    else if (traj_num == 2) {
+        data_grafik_aktif = data_grafik_2;
+        referencePos1_aktif = referencePos1_T2;
+        referencePos2_aktif = referencePos2_T2;
+        referencePos3_aktif = referencePos3_T2;
+        referenceVelo1_aktif = referenceVelo1_T2;
+        referenceVelo2_aktif = referenceVelo2_T2;
+        referenceVelo3_aktif = referenceVelo3_T2;
+        referenceFc1_aktif = referenceFc1_T2;
+        referenceFc2_aktif = referenceFc2_T2;
+        referenceFc3_aktif = referenceFc3_T2;
         
-        size_t comma_pos = line.find(',');
-        if (comma_pos == std::string::npos) continue;
+        JUMLAH_TITIK_AKTIF = TrajectoryConfig::JUMLAH_TITIK_T2;
+        GRAFIK_START_INDEX = TrajectoryConfig::GRAFIK_START_INDEX_T2;
+        GRAFIK_END_INDEX = TrajectoryConfig::GRAFIK_END_INDEX_T2;
+        JUMLAH_TITIK_HMI = GRAFIK_END_INDEX - GRAFIK_START_INDEX;
+        GAIT_START_INDEX = TrajectoryConfig::GAIT_START_INDEX_T2;
+        GAIT_END_INDEX = TrajectoryConfig::GAIT_END_INDEX_T2;
+        JUMLAH_TITIK_GAIT = GAIT_END_INDEX - GAIT_START_INDEX;
+    }
+    else if (traj_num == 3) {
+        data_grafik_aktif = data_grafik_3;
+        referencePos1_aktif = referencePos1_T3;
+        referencePos2_aktif = referencePos2_T3;
+        referencePos3_aktif = referencePos3_T3;
+        referenceVelo1_aktif = referenceVelo1_T3;
+        referenceVelo2_aktif = referenceVelo2_T3;
+        referenceVelo3_aktif = referenceVelo3_T3;
+        referenceFc1_aktif = referenceFc1_T3;
+        referenceFc2_aktif = referenceFc2_T3;
+        referenceFc3_aktif = referenceFc3_T3;
         
-        try {
-            float x = std::stof(line.substr(0, comma_pos));
-            float y = std::stof(line.substr(comma_pos + 1));
-            
-            traj.graph_x.push_back(x);
-            traj.graph_y.push_back(y);
-            count++;
-        } catch (const std::exception& e) {
-            std::cerr << "  Warning: Could not parse line in " << filename 
-                     << ": " << line << std::endl;
-        }
+        JUMLAH_TITIK_AKTIF = TrajectoryConfig::JUMLAH_TITIK_T3;
+        GRAFIK_START_INDEX = TrajectoryConfig::GRAFIK_START_INDEX_T3;
+        GRAFIK_END_INDEX = TrajectoryConfig::GRAFIK_END_INDEX_T3;
+        JUMLAH_TITIK_HMI = GRAFIK_END_INDEX - GRAFIK_START_INDEX;
+        GAIT_START_INDEX = TrajectoryConfig::GAIT_START_INDEX_T3;
+        GAIT_END_INDEX = TrajectoryConfig::GAIT_END_INDEX_T3;
+        JUMLAH_TITIK_GAIT = GAIT_END_INDEX - GAIT_START_INDEX;
     }
     
-    file.close();
-    return count > 0;
+    cout << "\n*** TRAJEKTORI " << traj_num << " AKTIF ***" << endl;
+    cout << "Jumlah titik total: " << JUMLAH_TITIK_AKTIF << endl;
+    cout << "HMI display range: " << GRAFIK_START_INDEX << " to " << GRAFIK_END_INDEX 
+         << " (" << JUMLAH_TITIK_HMI << " points)" << endl;
+    cout << "Main gait cycle range: " << GAIT_START_INDEX << " to " << GAIT_END_INDEX 
+         << " (" << JUMLAH_TITIK_GAIT << " points)" << endl;
 }
 
-void TrajectoryManager::switchTrajectory(int trajectory_id) {
-    TrajectoryData* traj = getTrajectoryData(trajectory_id);
-    if (traj) {
-        active_trajectory = traj;
-        std::cout << "\n*** TRAJECTORY " << trajectory_id << " ACTIVE ***" << std::endl;
-        std::cout << "Total points: " << traj->total_points << std::endl;
-        std::cout << "Gait range: " << traj->gait_start_index << " to " 
-                  << traj->gait_end_index << std::endl;
-    }
-}
-
-// ... rest of the methods remain the same ...
-
-int TrajectoryManager::getCurrentTrajectoryId() {
-    return active_trajectory ? active_trajectory->trajectory_id : 1;
-}
-
-TrajectoryPoint TrajectoryManager::getPoint(int index) {
-    if (active_trajectory && isValidIndex(index)) {
-        return active_trajectory->points[index];
-    }
-    return TrajectoryPoint{0, 0, 0, 0, 0, 0, 0, 0, 0};
-}
-
-int TrajectoryManager::getTotalPoints() {
-    return active_trajectory ? active_trajectory->total_points : 0;
-}
-
-int TrajectoryManager::getGaitStartIndex() {
-    return active_trajectory ? active_trajectory->gait_start_index : 0;
-}
-
-int TrajectoryManager::getGaitEndIndex() {
-    return active_trajectory ? active_trajectory->gait_end_index : 0;
-}
-
-int TrajectoryManager::getGraphStartIndex() {
-    return active_trajectory ? active_trajectory->graph_start_index : 0;
-}
-
-int TrajectoryManager::getGraphEndIndex() {
-    return active_trajectory ? active_trajectory->graph_end_index : 0;
-}
-
-float* TrajectoryManager::getGraphDataX() {
-    if (active_trajectory && !active_trajectory->graph_x.empty()) {
-        return active_trajectory->graph_x.data();
-    }
-    return nullptr;
-}
-
-float* TrajectoryManager::getGraphDataY() {
-    if (active_trajectory && !active_trajectory->graph_y.empty()) {
-        return active_trajectory->graph_y.data();
-    }
-    return nullptr;
-}
-
-int TrajectoryManager::getGraphPointCount() {
-    if (active_trajectory) {
-        return active_trajectory->graph_x.size();
-    }
-    return 0;
-}
-
-bool TrajectoryManager::isValidTrajectory(int trajectory_id) {
-    return trajectory_id >= 1 && trajectory_id <= 3;
-}
-
-bool TrajectoryManager::isValidIndex(int index) {
-    return active_trajectory && 
-           index >= 0 && 
-           index < (int)active_trajectory->points.size();
-}
-
-TrajectoryData* TrajectoryManager::getTrajectoryData(int trajectory_id) {
-    if (trajectory_id == 1) return &trajectory1;
-    if (trajectory_id == 2) return &trajectory2;
-    if (trajectory_id == 3) return &trajectory3;
-    return nullptr;
-}
-
-void TrajectoryManager::printTrajectoryInfo(int trajectory_id) {
-    TrajectoryData* traj = getTrajectoryData(trajectory_id);
-    if (!traj) return;
-    
-    std::cout << "\n========== TRAJECTORY " << trajectory_id << " ==========" << std::endl;
-    std::cout << "Total Points: " << traj->total_points << std::endl;
-    std::cout << "Gait Range: " << traj->gait_start_index << " - " 
-              << traj->gait_end_index << std::endl;
-    std::cout << "Graph Range: " << traj->graph_start_index << " - " 
-              << traj->graph_end_index << std::endl;
-    std::cout << "Graph Points Loaded: " << traj->graph_x.size() << std::endl;
-    
-    if (!traj->points.empty()) {
-        std::cout << "First Point: " << traj->points[0].pos1 << ", " 
-                  << traj->points[0].pos2 << ", " 
-                  << traj->points[0].pos3 << std::endl;
-    }
-    std::cout << "====================================\n" << std::endl;
-}
-
-void TrajectoryManager::printLoadStatus() {
-    std::cout << "\n========== TRAJECTORY LOAD STATUS ==========" << std::endl;
-    std::cout << "T1 Points: " << trajectory1.points.size() << std::endl;
-    std::cout << "T2 Points: " << trajectory2.points.size() << std::endl;
-    std::cout << "T3 Points: " << trajectory3.points.size() << std::endl;
-    std::cout << "Current Active: T" << getCurrentTrajectoryId() << std::endl;
-    std::cout << "==========================================\n" << std::endl;
-}
+// Getter implementations
+float (*TrajectoryData::getActiveGraphData())[2] { return data_grafik_aktif; }
+double* TrajectoryData::getActivePos1() { return referencePos1_aktif; }
+double* TrajectoryData::getActivePos2() { return referencePos2_aktif; }
+double* TrajectoryData::getActivePos3() { return referencePos3_aktif; }
+double* TrajectoryData::getActiveVelo1() { return referenceVelo1_aktif; }
+double* TrajectoryData::getActiveVelo2() { return referenceVelo2_aktif; }
+double* TrajectoryData::getActiveVelo3() { return referenceVelo3_aktif; }
+double* TrajectoryData::getActiveFc1() { return referenceFc1_aktif; }
+double* TrajectoryData::getActiveFc2() { return referenceFc2_aktif; }
+double* TrajectoryData::getActiveFc3() { return referenceFc3_aktif; }

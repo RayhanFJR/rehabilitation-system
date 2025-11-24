@@ -9,39 +9,45 @@
 #include <boost/asio.hpp>
 #include <string>
 
-class SerialPort {
+//==================================================================
+// CLASS SERIAL COMMUNICATION
+//==================================================================
+
+class SerialCommunication {
 public:
-    explicit SerialPort(boost::asio::io_context& io_ctx);
-    ~SerialPort();
+    SerialCommunication(boost::asio::io_context& io);
+    ~SerialCommunication();
     
-    // Connection management
-    bool open(const std::string& port, unsigned int baud_rate);
+    // Inisialisasi koneksi serial
+    bool initialize(const char* device_path, int baud_rate);
+    
+    // Kirim command ke Arduino
+    void sendCommand(const std::string& cmd);
+    
+    // Kirim data kontroler
+    void sendControllerData(int index, double* pos1, double* pos2, double* pos3,
+                           double* velo1, double* velo2, double* velo3,
+                           double* fc1, double* fc2, double* fc3);
+    
+    // Kirim data retreat
+    void sendRetreatData(int index, double* pos1, double* pos2, double* pos3,
+                        double* velo1, double* velo2, double* velo3,
+                        double* fc1, double* fc2, double* fc3);
+    
+    // Baca data dari Arduino
+    std::string readData();
+    
+    // Cek apakah ada data tersedia
+    bool dataAvailable();
+    
+    // Close koneksi
     void close();
-    bool isOpen() const;
     
-    // Write functions
-    bool sendCommand(const std::string& cmd);
-    bool sendControlData(float pos1, float pos2, float pos3,
-                        float vel1, float vel2, float vel3,
-                        float fc1, float fc2, float fc3);
-    bool sendManualCommand(char direction);  // '0'=stop, '1'=fwd, '2'=back
-    bool sendCalibrate();
-    bool sendEmergencyStop();
-    
-    // ========== NEW: Read functions ==========
-    std::string readLine();        // Read until newline (non-blocking)
-    std::string readAvailable();   // Read all available data (non-blocking)
-
-    void send(const std::string& msg);
-
-    void SerialPort::send(const std::string& msg) {
-    write(msg + "\n");
-    }
+    // Get serial port reference
+    boost::asio::serial_port& getPort() { return serial_port_; }
     
 private:
-    boost::asio::io_context& io_context;
-    boost::asio::serial_port serial;
-    bool is_open;
+    boost::asio::serial_port serial_port_;
 };
 
 #endif // SERIAL_PORT_H

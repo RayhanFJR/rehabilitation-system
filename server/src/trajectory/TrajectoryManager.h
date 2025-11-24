@@ -3,73 +3,109 @@
 //==================================================================
 #ifndef TRAJECTORY_MANAGER_H
 #define TRAJECTORY_MANAGER_H
-#include <vector>
+
+#include "config.h"
 #include <string>
-#include <cstring>
-// ============ TRAJECTORY STRUCTURE ============
-struct TrajectoryPoint {
-float pos1, pos2, pos3;      // Position for 3 motors
-float velo1, velo2, velo3;   // Velocity
-float fc1, fc2, fc3;         // Feedforward force
-};
-struct TrajectoryData {
-int trajectory_id;           // 1, 2, or 3
-int total_points;            // Total points in trajectory
-int gait_start_index;        // Start of main gait cycle
-int gait_end_index;          // End of main gait cycle
-int graph_start_index;       // HMI display start
-int graph_end_index;         // HMI display end
-std::vector<TrajectoryPoint> points;
-std::vector<float> graph_x;
-std::vector<float> graph_y;
-};
-// ============ CLASS DEFINITION ============
-class TrajectoryManager {
+
+//==================================================================
+// CLASS TRAJECTORY DATA
+//==================================================================
+
+class TrajectoryData {
 public:
-TrajectoryManager();
-~TrajectoryManager();
-// ========== INITIALIZATION ==========
-bool loadAllTrajectories();
-bool loadTrajectory(int trajectory_id, const std::string& data_dir);
-
-// ========== TRAJECTORY SWITCHING ==========
-void switchTrajectory(int trajectory_id);
-int getCurrentTrajectoryId();
-
-// ========== POINT ACCESS ==========
-TrajectoryPoint getPoint(int index);
-int getTotalPoints();
-int getGaitStartIndex();
-int getGaitEndIndex();
-int getGraphStartIndex();
-int getGraphEndIndex();
-
-// ========== GRAPH DATA ==========
-float* getGraphDataX();
-float* getGraphDataY();
-int getGraphPointCount();
-
-// ========== VALIDATION ==========
-bool isValidTrajectory(int trajectory_id);
-bool isValidIndex(int index);
-
-// ========== DEBUG ==========
-void printTrajectoryInfo(int trajectory_id);
-void printLoadStatus();
+    // Constructor
+    TrajectoryData();
+    
+    // Load semua data trajektori
+    bool loadAllTrajectories();
+    
+    // Switch trajektori aktif
+    void switchTrajectory(int trajectory_num);
+    
+    // Getter untuk data aktif
+    float (*getActiveGraphData())[2];
+    double* getActivePos1();
+    double* getActivePos2();
+    double* getActivePos3();
+    double* getActiveVelo1();
+    double* getActiveVelo2();
+    double* getActiveVelo3();
+    double* getActiveFc1();
+    double* getActiveFc2();
+    double* getActiveFc3();
+    
+    // Getter untuk konfigurasi aktif
+    int getActiveTrajectory() const { return trajektori_aktif; }
+    int getJumlahTitikAktif() const { return JUMLAH_TITIK_AKTIF; }
+    int getGrafikStartIndex() const { return GRAFIK_START_INDEX; }
+    int getGrafikEndIndex() const { return GRAFIK_END_INDEX; }
+    int getJumlahTitikHMI() const { return JUMLAH_TITIK_HMI; }
+    int getGaitStartIndex() const { return GAIT_START_INDEX; }
+    int getGaitEndIndex() const { return GAIT_END_INDEX; }
+    int getJumlahTitikGait() const { return JUMLAH_TITIK_GAIT; }
+    
 private:
-// ========== TRAJECTORY STORAGE ==========
-TrajectoryData trajectory1;
-TrajectoryData trajectory2;
-TrajectoryData trajectory3;
-TrajectoryData* active_trajectory;
-// ========== HELPER FUNCTIONS ==========
-TrajectoryData* getTrajectoryData(int trajectory_id);
-bool loadPointsFromFile(TrajectoryData& traj, const std::string& filename);
-bool loadGraphData(TrajectoryData& traj, const std::string& filename);
-
-// ========== CONFIGURATION ==========
-void configureTrajectory1();
-void configureTrajectory2();
-void configureTrajectory3();
+    // Data Trajektori 1
+    float data_grafik_1[TrajectoryConfig::JUMLAH_TITIK_T1][2];
+    double referencePos1_T1[818];
+    double referencePos2_T1[818];
+    double referencePos3_T1[818];
+    double referenceVelo1_T1[TrajectoryConfig::JUMLAH_TITIK_T1];
+    double referenceVelo2_T1[TrajectoryConfig::JUMLAH_TITIK_T1];
+    double referenceVelo3_T1[TrajectoryConfig::JUMLAH_TITIK_T1];
+    double referenceFc1_T1[TrajectoryConfig::JUMLAH_TITIK_T1];
+    double referenceFc2_T1[TrajectoryConfig::JUMLAH_TITIK_T1];
+    double referenceFc3_T1[TrajectoryConfig::JUMLAH_TITIK_T1];
+    
+    // Data Trajektori 2
+    float data_grafik_2[TrajectoryConfig::JUMLAH_TITIK_T2][2];
+    double referencePos1_T2[TrajectoryConfig::JUMLAH_TITIK_T2];
+    double referencePos2_T2[TrajectoryConfig::JUMLAH_TITIK_T2];
+    double referencePos3_T2[TrajectoryConfig::JUMLAH_TITIK_T2];
+    double referenceVelo1_T2[TrajectoryConfig::JUMLAH_TITIK_T2];
+    double referenceVelo2_T2[TrajectoryConfig::JUMLAH_TITIK_T2];
+    double referenceVelo3_T2[TrajectoryConfig::JUMLAH_TITIK_T2];
+    double referenceFc1_T2[TrajectoryConfig::JUMLAH_TITIK_T2];
+    double referenceFc2_T2[TrajectoryConfig::JUMLAH_TITIK_T2];
+    double referenceFc3_T2[TrajectoryConfig::JUMLAH_TITIK_T2];
+    
+    // Data Trajektori 3
+    float data_grafik_3[TrajectoryConfig::JUMLAH_TITIK_T3][2];
+    double referencePos1_T3[TrajectoryConfig::JUMLAH_TITIK_T3];
+    double referencePos2_T3[TrajectoryConfig::JUMLAH_TITIK_T3];
+    double referencePos3_T3[TrajectoryConfig::JUMLAH_TITIK_T3];
+    double referenceVelo1_T3[TrajectoryConfig::JUMLAH_TITIK_T3];
+    double referenceVelo2_T3[TrajectoryConfig::JUMLAH_TITIK_T3];
+    double referenceVelo3_T3[TrajectoryConfig::JUMLAH_TITIK_T3];
+    double referenceFc1_T3[TrajectoryConfig::JUMLAH_TITIK_T3];
+    double referenceFc2_T3[TrajectoryConfig::JUMLAH_TITIK_T3];
+    double referenceFc3_T3[TrajectoryConfig::JUMLAH_TITIK_T3];
+    
+    // Pointer aktif
+    float (*data_grafik_aktif)[2];
+    double *referencePos1_aktif;
+    double *referencePos2_aktif;
+    double *referencePos3_aktif;
+    double *referenceVelo1_aktif;
+    double *referenceVelo2_aktif;
+    double *referenceVelo3_aktif;
+    double *referenceFc1_aktif;
+    double *referenceFc2_aktif;
+    double *referenceFc3_aktif;
+    
+    // Konfigurasi aktif
+    int trajektori_aktif;
+    int JUMLAH_TITIK_AKTIF;
+    int GRAFIK_START_INDEX;
+    int GRAFIK_END_INDEX;
+    int JUMLAH_TITIK_HMI;
+    int GAIT_START_INDEX;
+    int GAIT_END_INDEX;
+    int JUMLAH_TITIK_GAIT;
+    
+    // Helper functions
+    bool loadDataGrafik(const std::string& filename, float array[][2], int jumlah_titik);
+    bool loadDoubleArray(const std::string& filename, double* array, int size);
 };
-#endif  // TRAJECTORY_MANAGER_H
+
+#endif //  TRAJECTORY_MANAGER_H
