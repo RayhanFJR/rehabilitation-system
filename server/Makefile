@@ -5,11 +5,11 @@ CXXFLAGS = -std=c++11 -Wall -O2
 LDFLAGS = -lboost_system -lmodbus -lpthread
 
 # Source files
-SOURCES = main_server.cpp \
-          TrajectoryManager.cpp \
-          SerialPort.cpp \
-          ModbusServer.cpp \
-          StateMachine.cpp
+SOURCES = src/main_server.cpp \
+          src/trajectory/TrajectoryManager.cpp \
+          src/serial/SerialPort.cpp \
+          src/modbus/ModbusServer.cpp \
+          src/state_machine/StateMachine.cpp
 
 # Object files
 OBJECTS = $(SOURCES:.cpp=.o)
