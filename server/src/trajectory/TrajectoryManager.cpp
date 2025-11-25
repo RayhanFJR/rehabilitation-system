@@ -3,9 +3,11 @@
 // Updated dengan path management yang benar
 //==================================================================
 #include "TrajectoryManager.h"
+#include "../config/PathConfig.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <filesystem>
 
 using namespace std;
 
@@ -77,47 +79,52 @@ bool TrajectoryData::loadDoubleArray(const string& filename, double* array, int 
 
 bool TrajectoryData::loadAllTrajectories() {
     cout << "\n=== Loading All Trajectory Data ===" << endl;
+    PathConfig::printPaths();
     
     bool success = true;
+    namespace fs = std::filesystem;
     
     // Load Trajektori 1
     cout << "\n[Trajektori 1 - " << TrajectoryConfig::JUMLAH_TITIK_T1 << " titik]" << endl;
-    success &= loadDataGrafik("data/trajectory_1/grafik.txt", data_grafik_1, TrajectoryConfig::JUMLAH_TITIK_T1);
-    success &= loadDoubleArray("data/trajectory_1/pos1.txt", referencePos1_T1, 818);
-    success &= loadDoubleArray("data/trajectory_1/pos2.txt", referencePos2_T1, 818);
-    success &= loadDoubleArray("data/trajectory_1/pos3.txt", referencePos3_T1, 818);
-    success &= loadDoubleArray("data/trajectory_1/velo1.txt", referenceVelo1_T1, TrajectoryConfig::JUMLAH_TITIK_T1);
-    success &= loadDoubleArray("data/trajectory_1/velo2.txt", referenceVelo2_T1, TrajectoryConfig::JUMLAH_TITIK_T1);
-    success &= loadDoubleArray("data/trajectory_1/velo3.txt", referenceVelo3_T1, TrajectoryConfig::JUMLAH_TITIK_T1);
-    success &= loadDoubleArray("data/trajectory_1/fc1.txt", referenceFc1_T1, TrajectoryConfig::JUMLAH_TITIK_T1);
-    success &= loadDoubleArray("data/trajectory_1/fc2.txt", referenceFc2_T1, TrajectoryConfig::JUMLAH_TITIK_T1);
-    success &= loadDoubleArray("data/trajectory_1/fc3.txt", referenceFc3_T1, TrajectoryConfig::JUMLAH_TITIK_T1);
+    const fs::path traj1Dir = PathConfig::getTrajectoryDir(1);
+    success &= loadDataGrafik((traj1Dir / "grafik.txt").string(), data_grafik_1, TrajectoryConfig::JUMLAH_TITIK_T1);
+    success &= loadDoubleArray((traj1Dir / "pos1.txt").string(), referencePos1_T1, 818);
+    success &= loadDoubleArray((traj1Dir / "pos2.txt").string(), referencePos2_T1, 818);
+    success &= loadDoubleArray((traj1Dir / "pos3.txt").string(), referencePos3_T1, 818);
+    success &= loadDoubleArray((traj1Dir / "velo1.txt").string(), referenceVelo1_T1, TrajectoryConfig::JUMLAH_TITIK_T1);
+    success &= loadDoubleArray((traj1Dir / "velo2.txt").string(), referenceVelo2_T1, TrajectoryConfig::JUMLAH_TITIK_T1);
+    success &= loadDoubleArray((traj1Dir / "velo3.txt").string(), referenceVelo3_T1, TrajectoryConfig::JUMLAH_TITIK_T1);
+    success &= loadDoubleArray((traj1Dir / "fc1.txt").string(), referenceFc1_T1, TrajectoryConfig::JUMLAH_TITIK_T1);
+    success &= loadDoubleArray((traj1Dir / "fc2.txt").string(), referenceFc2_T1, TrajectoryConfig::JUMLAH_TITIK_T1);
+    success &= loadDoubleArray((traj1Dir / "fc3.txt").string(), referenceFc3_T1, TrajectoryConfig::JUMLAH_TITIK_T1);
     
     // Load Trajektori 2
     cout << "\n[Trajektori 2 - " << TrajectoryConfig::JUMLAH_TITIK_T2 << " titik]" << endl;
-    success &= loadDataGrafik("data/trajectory_2/grafik.txt", data_grafik_2, TrajectoryConfig::JUMLAH_TITIK_T2);
-    success &= loadDoubleArray("data/trajectory_2/pos1.txt", referencePos1_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
-    success &= loadDoubleArray("data/trajectory_2/pos2.txt", referencePos2_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
-    success &= loadDoubleArray("data/trajectory_2/pos3.txt", referencePos3_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
-    success &= loadDoubleArray("data/trajectory_2/velo1.txt", referenceVelo1_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
-    success &= loadDoubleArray("data/trajectory_2/velo2.txt", referenceVelo2_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
-    success &= loadDoubleArray("data/trajectory_2/velo3.txt", referenceVelo3_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
-    success &= loadDoubleArray("data/trajectory_2/fc1.txt", referenceFc1_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
-    success &= loadDoubleArray("data/trajectory_2/fc2.txt", referenceFc2_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
-    success &= loadDoubleArray("data/trajectory_2/fc3.txt", referenceFc3_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
+    const fs::path traj2Dir = PathConfig::getTrajectoryDir(2);
+    success &= loadDataGrafik((traj2Dir / "grafik.txt").string(), data_grafik_2, TrajectoryConfig::JUMLAH_TITIK_T2);
+    success &= loadDoubleArray((traj2Dir / "pos1.txt").string(), referencePos1_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
+    success &= loadDoubleArray((traj2Dir / "pos2.txt").string(), referencePos2_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
+    success &= loadDoubleArray((traj2Dir / "pos3.txt").string(), referencePos3_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
+    success &= loadDoubleArray((traj2Dir / "velo1.txt").string(), referenceVelo1_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
+    success &= loadDoubleArray((traj2Dir / "velo2.txt").string(), referenceVelo2_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
+    success &= loadDoubleArray((traj2Dir / "velo3.txt").string(), referenceVelo3_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
+    success &= loadDoubleArray((traj2Dir / "fc1.txt").string(), referenceFc1_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
+    success &= loadDoubleArray((traj2Dir / "fc2.txt").string(), referenceFc2_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
+    success &= loadDoubleArray((traj2Dir / "fc3.txt").string(), referenceFc3_T2, TrajectoryConfig::JUMLAH_TITIK_T2);
     
     // Load Trajektori 3
     cout << "\n[Trajektori 3 - " << TrajectoryConfig::JUMLAH_TITIK_T3 << " titik]" << endl;
-    success &= loadDataGrafik("data/trajectory_3/grafik.txt", data_grafik_3, TrajectoryConfig::JUMLAH_TITIK_T3);
-    success &= loadDoubleArray("data/trajectory_3/pos1.txt", referencePos1_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
-    success &= loadDoubleArray("data/trajectory_3/pos2.txt", referencePos2_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
-    success &= loadDoubleArray("data/trajectory_3/pos3.txt", referencePos3_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
-    success &= loadDoubleArray("data/trajectory_3/velo1.txt", referenceVelo1_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
-    success &= loadDoubleArray("data/trajectory_3/velo2.txt", referenceVelo2_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
-    success &= loadDoubleArray("data/trajectory_3/velo3.txt", referenceVelo3_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
-    success &= loadDoubleArray("data/trajectory_3/fc1.txt", referenceFc1_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
-    success &= loadDoubleArray("data/trajectory_3/fc2.txt", referenceFc2_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
-    success &= loadDoubleArray("data/trajectory_3/fc3.txt", referenceFc3_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
+    const fs::path traj3Dir = PathConfig::getTrajectoryDir(3);
+    success &= loadDataGrafik((traj3Dir / "grafik.txt").string(), data_grafik_3, TrajectoryConfig::JUMLAH_TITIK_T3);
+    success &= loadDoubleArray((traj3Dir / "pos1.txt").string(), referencePos1_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
+    success &= loadDoubleArray((traj3Dir / "pos2.txt").string(), referencePos2_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
+    success &= loadDoubleArray((traj3Dir / "pos3.txt").string(), referencePos3_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
+    success &= loadDoubleArray((traj3Dir / "velo1.txt").string(), referenceVelo1_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
+    success &= loadDoubleArray((traj3Dir / "velo2.txt").string(), referenceVelo2_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
+    success &= loadDoubleArray((traj3Dir / "velo3.txt").string(), referenceVelo3_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
+    success &= loadDoubleArray((traj3Dir / "fc1.txt").string(), referenceFc1_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
+    success &= loadDoubleArray((traj3Dir / "fc2.txt").string(), referenceFc2_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
+    success &= loadDoubleArray((traj3Dir / "fc3.txt").string(), referenceFc3_T3, TrajectoryConfig::JUMLAH_TITIK_T3);
     
     if (success) {
         cout << "\n=== All trajectory data loaded successfully ===" << endl;
