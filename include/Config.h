@@ -70,11 +70,11 @@ namespace ModbusAddr {
 }
 
 // Serial Port Configuration
-const char* DEFAULT_SERIAL_PORT = "/dev/ttyACM0";
+constexpr const char DEFAULT_SERIAL_PORT[] = "/dev/ttyACM0";
 const int SERIAL_BAUD_RATE = 115200;
 
 // Modbus Configuration
-const char* MODBUS_HOST = "0.0.0.0";
+constexpr const char MODBUS_HOST[] = "0.0.0.0";
 const int MODBUS_PORT = 5020;
 const int MODBUS_SLAVE_ID = 1;
 const int MODBUS_REGISTER_COUNT = 8000;
