@@ -53,6 +53,9 @@ public:
     int getCurrentCycle() const { return current_cycle; }
     void resetCycle() { current_cycle = 0; target_cycle = 1; }
     void advanceToNextCycle(bool& animasi_grafik, int& t_controller, int& t_grafik);
+    void startAutoReturnToZero(int controllerSteps);
+    bool isAutoReturnToIdlePending() const { return autoReturnToIdle; }
+    void completeAutoReturnToIdle();
     
     // Retreat status
     bool isRetreatActive() const { return retreatActive; }
@@ -71,10 +74,12 @@ private:
     int retreatIndex;
     bool retreatActive;
     int lastForwardIndex;
+    bool autoReturnToIdle;
     
     // Helper functions
     void sendControllerData(int t);
     void sendRetreatData(int index);
+    int clampRetreatIndex(int controllerSteps) const;
 };
 
 #endif // CONTROLHANDLER_H

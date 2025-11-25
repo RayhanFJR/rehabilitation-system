@@ -58,6 +58,12 @@ SystemState handleAutoRetreatState(ModbusHandler& modbus, SerialHandler& serial,
         return SystemState::AUTO_RETREAT;
     }
     
+    if (control.isAutoReturnToIdlePending()) {
+        control.completeAutoReturnToIdle();
+        messageSend = false;
+        return SystemState::IDLE;
+    }
+    
     if (!control.isRetreatActive() && !messageSend) {
         std::cout << "\n=== RETREAT COMPLETED ===" << std::endl;
         std::cout << "System stopped. Ready for RESET." << std::endl;
@@ -100,14 +106,15 @@ SystemState handlePostRehabDelay(std::chrono::steady_clock::time_point& delaySta
             return SystemState::AUTO_REHAB;
         } 
         else {
-            // All cycles completed
-            serial.sendCommand("0");
+            // All cycles completed - trigger manual reverse to zero
             std::cout << "\n=== SEMUA CYCLE SELESAI ===" << std::endl;
             std::cout << "Total cycle completed: " << current_cycle << std::endl;
-            std::cout << "Kembali ke IDLE." << std::endl;
+            std::cout << "Menjalankan mundur otomatis untuk kembali ke 0..." << std::endl;
             
-            control.resetCycle();
-            return SystemState::IDLE;
+            control.startAutoReturnToZero(t_controller);
+            t_controller = 0;
+            animasi_grafik = false;
+            return SystemState::AUTO_RETREAT;
         }
     }
     return SystemState::POST_REHAB_DELAY;

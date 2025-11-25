@@ -10,7 +10,8 @@ ControlHandler::ControlHandler(ModbusHandler& modbus, SerialHandler& serial,
     : modbusHandler(modbus), serialHandler(serial), 
       trajectoryManager(trajectory), graphManager(graph),
       target_cycle(1), current_cycle(0),
-      retreatIndex(0), retreatActive(false), lastForwardIndex(0) {
+      retreatIndex(0), retreatActive(false), lastForwardIndex(0),
+      autoReturnToIdle(false) {
 }
 
 void ControlHandler::handleManualControl() {
@@ -92,6 +93,35 @@ void ControlHandler::advanceToNextCycle(bool& animasi_grafik, int& t_controller,
     modbusHandler.writeFloat(ModbusAddr::REALTIME_LOAD_CELL, 0.0f);
 }
 
+int ControlHandler::clampRetreatIndex(int controllerSteps) const {
+    int gaitStart = trajectoryManager.getGaitStartIndex();
+    int gaitEnd = trajectoryManager.getGaitEndIndex();
+    int actualIndex = gaitStart + controllerSteps - 1;
+    
+    if (actualIndex < gaitStart) actualIndex = gaitStart;
+    if (actualIndex >= gaitEnd) actualIndex = gaitEnd - 1;
+    return actualIndex;
+}
+
+void ControlHandler::startAutoReturnToZero(int controllerSteps) {
+    if (retreatActive) return;
+    
+    int retreatStartIndex = clampRetreatIndex(controllerSteps);
+    startRetreatSequence(retreatStartIndex);
+    autoReturnToIdle = true;
+    
+    std::cout << "\n=== MENGEMBALIKAN POSISI KE TITIK AWAL ===" << std::endl;
+    std::cout << "Mulai mundur dari index: " << retreatStartIndex << std::endl;
+}
+
+void ControlHandler::completeAutoReturnToIdle() {
+    serialHandler.sendCommand("0");
+    resetCycle();
+    autoReturnToIdle = false;
+    
+    std::cout << "\nPosisi telah kembali ke titik awal. Sistem masuk IDLE.\n" << std::endl;
+}
+
 void ControlHandler::updateThresholds(int& last_thresh1, int& last_thresh2) {
     modbus_mapping_t* mb_mapping = modbusHandler.getMapping();
     if (mb_mapping == nullptr) return;
@@ -139,7 +169,8 @@ void ControlHandler::processArduinoFeedback(std::string& arduinoFeedbackState,
     if (resultString.find("RETREAT") != std::string::npos && 
         currentState == SystemState::AUTO_REHAB) {
         std::cout << "\n!!! RETREAT COMMAND RECEIVED !!!" << std::endl;
-        startRetreatSequence(t_controller);
+        int retreatStartIndex = clampRetreatIndex(t_controller);
+        startRetreatSequence(retreatStartIndex);
         currentState = SystemState::AUTO_RETREAT;
     }
     
