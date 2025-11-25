@@ -109,7 +109,7 @@ bool TrajectoryManager::loadTrajectory(int trajNum, const std::string& basePath)
     
     if (trajNum == 1) {
         traj = trajectory1;
-        folder = basePath + "/data_1/";
+        folder = basePath + "/data/data_1/";
         expectedPoints = JUMLAH_TITIK_T1;
         traj->jumlah_titik = JUMLAH_TITIK_T1;
         traj->grafik_start_index = GRAFIK_START_INDEX_T1;
@@ -118,7 +118,7 @@ bool TrajectoryManager::loadTrajectory(int trajNum, const std::string& basePath)
         traj->gait_end_index = GAIT_END_INDEX_T1;
     } else if (trajNum == 2) {
         traj = trajectory2;
-        folder = basePath + "/data_2/";
+        folder = basePath + "/data/data_2/";
         expectedPoints = JUMLAH_TITIK_T2;
         traj->jumlah_titik = JUMLAH_TITIK_T2;
         traj->grafik_start_index = GRAFIK_START_INDEX_T2;
@@ -127,7 +127,7 @@ bool TrajectoryManager::loadTrajectory(int trajNum, const std::string& basePath)
         traj->gait_end_index = GAIT_END_INDEX_T2;
     } else if (trajNum == 3) {
         traj = trajectory3;
-        folder = basePath + "/data_3/";
+        folder = basePath + "/data/data_3/";
         expectedPoints = JUMLAH_TITIK_T3;
         traj->jumlah_titik = JUMLAH_TITIK_T3;
         traj->grafik_start_index = GRAFIK_START_INDEX_T3;
