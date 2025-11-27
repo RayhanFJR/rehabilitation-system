@@ -64,7 +64,8 @@ void ControlHandler::startRehabCycle(bool& animasi_grafik, int& t_controller, in
     mb_mapping->tab_registers[ModbusAddr::COMMAND_REG] = 1;
     animasi_grafik = true;
     t_controller = 0;
-    t_grafik = trajectoryManager.getGraphStartIndex();
+    // Sinkronkan t_grafik dengan posisi controller (mulai dari gaitStartIndex)
+    t_grafik = trajectoryManager.getGaitStartIndex();
     
     retreatActive = false;
     retreatIndex = 0;
@@ -85,7 +86,8 @@ void ControlHandler::advanceToNextCycle(bool& animasi_grafik, int& t_controller,
               << "/" << target_cycle << " ===" << std::endl;
     
     t_controller = 0;
-    t_grafik = trajectoryManager.getGraphStartIndex();
+    // Sinkronkan t_grafik dengan posisi controller (mulai dari gaitStartIndex)
+    t_grafik = trajectoryManager.getGaitStartIndex();
     animasi_grafik = true;
     
     graphManager.clearChannel1Data();
@@ -233,18 +235,22 @@ void ControlHandler::processAutoRehab(SystemState& currentState, int& t_controll
             if (t_controller < jumlah_titik_gait) {
                 int actual_index = trajectoryManager.getGaitStartIndex() + t_controller;
                 sendControllerData(actual_index);
+                
+                // Sinkronkan t_grafik dengan actual_index controller
+                t_grafik = actual_index;
+                
+                // Update grafik animasi jika masih dalam range
+                int grafik_end = trajectoryManager.getGraphEndIndex();
+                if (animasi_grafik && t_grafik < grafik_end) {
+                    graphManager.updateGraphAnimation(t_grafik);
+                } else if (t_grafik >= grafik_end) {
+                    animasi_grafik = false;
+                }
+                
                 t_controller++;
             } else {
                 currentState = SystemState::POST_REHAB_DELAY;
                 delayStartTime = currentTime;
-            }
-            
-            int grafik_end = trajectoryManager.getGraphEndIndex();
-            if (animasi_grafik && t_grafik < grafik_end) {
-                graphManager.updateGraphAnimation(t_grafik);
-                t_grafik++;
-            } else if (t_grafik >= grafik_end) {
-                animasi_grafik = false;
             }
             
             lastTraTime = currentTime;

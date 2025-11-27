@@ -106,10 +106,10 @@ SystemState handlePostRehabDelay(std::chrono::steady_clock::time_point& delaySta
             return SystemState::AUTO_REHAB;
         } 
         else {
-            // All cycles completed - return to IDLE for manual retreat
+            // All cycles completed - automatically trigger manual retreat
             std::cout << "\n=== SEMUA CYCLE SELESAI ===" << std::endl;
             std::cout << "Total cycle completed: " << current_cycle << std::endl;
-            std::cout << "Sistem kembali ke IDLE. Gunakan kontrol manual mundur untuk kembali ke posisi awal." << std::endl;
+            std::cout << "Kembali ke posisi awal... Kembali ke IDLE" << std::endl;
             
             control.resetCycle();
             t_controller = 0;
@@ -121,6 +121,8 @@ SystemState handlePostRehabDelay(std::chrono::steady_clock::time_point& delaySta
                 mb_mapping->tab_registers[ModbusAddr::COMMAND_REG] = 0;
                 mb_mapping->tab_registers[ModbusAddr::START] = 0;
             }
+            
+            serial.sendCommand("2");
             
             return SystemState::IDLE;
         }
