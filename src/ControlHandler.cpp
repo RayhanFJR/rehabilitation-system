@@ -67,6 +67,12 @@ void ControlHandler::startRehabCycle(bool& animasi_grafik, int& t_controller, in
     // Sinkronkan t_grafik dengan posisi controller (mulai dari gaitStartIndex)
     t_grafik = trajectoryManager.getGaitStartIndex();
     
+    // Set animasi counter ke posisi awal yang sesuai dengan gaitStartIndex
+    int grafik_start = trajectoryManager.getGraphStartIndex();
+    int gait_start = trajectoryManager.getGaitStartIndex();
+    int initial_hmi_index = gait_start - grafik_start;
+    graphManager.setAnimationCounter(initial_hmi_index);
+    
     retreatActive = false;
     retreatIndex = 0;
     lastForwardIndex = 0;
@@ -92,6 +98,13 @@ void ControlHandler::advanceToNextCycle(bool& animasi_grafik, int& t_controller,
     
     graphManager.clearChannel1Data();
     graphManager.resetAnimationCounter();
+    
+    // Set animasi counter ke posisi awal yang sesuai dengan gaitStartIndex
+    int grafik_start = trajectoryManager.getGraphStartIndex();
+    int gait_start = trajectoryManager.getGaitStartIndex();
+    int initial_hmi_index = gait_start - grafik_start;
+    graphManager.setAnimationCounter(initial_hmi_index);
+    
     modbusHandler.writeFloat(ModbusAddr::REALTIME_LOAD_CELL, 0.0f);
 }
 

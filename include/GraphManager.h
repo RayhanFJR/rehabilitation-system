@@ -17,6 +17,7 @@ public:
     
     // Animation control
     void resetAnimationCounter() { hmi_animation_counter = 0; }
+    void setAnimationCounter(int value) { hmi_animation_counter = value; }
     int getAnimationCounter() const { return hmi_animation_counter; }
 
 private:

@@ -66,7 +66,8 @@ void GraphManager::updateGraphAnimation(int t_grafik) {
         modbus_set_float_dcba(data_grafik_aktif[t_grafik][1], 
             mb_mapping->tab_registers + ModbusAddr::Y_DATA_CH1_START + (hmi_index * 2));
         
-        hmi_animation_counter++;
+        // Set counter ke posisi yang sesuai dengan t_grafik untuk sinkronisasi yang tepat
+        hmi_animation_counter = hmi_index + 1;
         mb_mapping->tab_registers[ModbusAddr::NUM_OF_DATA_CH1] = hmi_animation_counter;
         mb_mapping->tab_registers[ModbusAddr::COMMAND_REG] = 3;
     }
