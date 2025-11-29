@@ -247,18 +247,21 @@ void ControlHandler::processAutoRehab(SystemState& currentState, int& t_controll
             int jumlah_titik_gait = trajectoryManager.getGaitPointCount();
             if (t_controller < jumlah_titik_gait) {
                 int actual_index = trajectoryManager.getGaitStartIndex() + t_controller;
-                sendControllerData(actual_index);
                 
                 // Sinkronkan t_grafik dengan actual_index controller
                 t_grafik = actual_index;
                 
-                // Update grafik animasi jika masih dalam range
+                // Update grafik animasi SETIAP KALI controller mengirim data untuk sinkronisasi yang tepat
+                // Pastikan grafik selalu diupdate selama dalam range grafik
+                int grafik_start = trajectoryManager.getGraphStartIndex();
                 int grafik_end = trajectoryManager.getGraphEndIndex();
-                if (animasi_grafik && t_grafik < grafik_end) {
+                if (t_grafik >= grafik_start && t_grafik < grafik_end) {
                     graphManager.updateGraphAnimation(t_grafik);
-                } else if (t_grafik >= grafik_end) {
-                    animasi_grafik = false;
+                    animasi_grafik = true;  // Pastikan animasi tetap aktif
                 }
+                
+                // Kirim data controller
+                sendControllerData(actual_index);
                 
                 t_controller++;
             } else {
