@@ -8,7 +8,7 @@
 // *** JUMLAH TITIK PER TRAJEKTORI ***
 const int JUMLAH_TITIK_T1 = 816;
 const int JUMLAH_TITIK_T2 = 1370;
-const int JUMLAH_TITIK_T3 = 1370;
+const int JUMLAH_TITIK_T3 = 816;
 const int MAX_TITIK = 1370;  // Maximum untuk alokasi array
 
 // Timing Configuration
@@ -31,9 +31,9 @@ const int GAIT_END_INDEX_T2 = 1177;
 
 // Trajektori 3
 const int GRAFIK_START_INDEX_T3 = 1;
-const int GRAFIK_END_INDEX_T3 = 1370;
-const int GAIT_START_INDEX_T3 = 165;
-const int GAIT_END_INDEX_T3 = 1177;
+const int GRAFIK_END_INDEX_T3 = 816;
+const int GAIT_START_INDEX_T3 = 101;
+const int GAIT_END_INDEX_T3 = 715;
 
 // Modbus Register Addresses
 namespace ModbusAddr {
