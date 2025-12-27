@@ -58,14 +58,26 @@ const int admittanceUpdateInterval = 10;  // 10ms = 100Hz update rate
 //==================================================================
 // Transfer Function: Z(s) = F_external / (M*s^2 + B*s + K)
 // Original: Z(s) = F_ext / (101.7*s^2 + 500*s + 614.1)
-// TUNED FOR BETTER RESPONSE: Reduced values for higher compliance
 
-float M_adm = 10.0;     // Virtual mass (kg) - REDUCED from 101.7
-float B_adm = 50.0;     // Virtual damping (N·s/m) - REDUCED from 500
-float K_adm = 100.0;    // Virtual stiffness (N/m) - REDUCED from 614.1
+float M_adm = 101.7;    // Virtual mass (kg)
+float B_adm = 500.0;    // Virtual damping (N·s/m)
+float K_adm = 614.1;    // Virtual stiffness (N/m)
 
 // Compliance gain multiplier (adjustable via serial command)
 float admittanceGain = 1.0;
+
+// Trajectory pause parameters
+const float FORCE_PAUSE_THRESHOLD = 5.0;  // Pause trajectory if force > 5N
+bool trajectoryPaused = false;
+float pausedRefPos1 = 0.0;
+float pausedRefPos2 = 0.0;
+float pausedRefPos3 = 0.0;
+float pausedRefVelo1 = 0.0;
+float pausedRefVelo2 = 0.0;
+float pausedRefVelo3 = 0.0;
+float pausedRefFc1 = 0.0;
+float pausedRefFc2 = 0.0;
+float pausedRefFc3 = 0.0;
 
 // Admittance state variables (untuk diskrit integration)
 float Z_adm = 0.0;       // Displacement dari admittance (m)
@@ -349,20 +361,41 @@ void parseTrajectoryCommand(String data, bool isRetreat) {
     String refFc2Str = data.substring(0, commaIndex8);
     String refFc3Str = data.substring(commaIndex8 + 1);
     
-    refPos1 = refPos1Str.toFloat();
-    refPos2 = refPos2Str.toFloat();
-    refPos3 = refPos3Str.toFloat();
-    refVelo1 = refVelo1Str.toFloat();
-    refVelo2 = refVelo2Str.toFloat();
-    refVelo3 = refVelo3Str.toFloat();
-    refFc1 = refFc1Str.toFloat();
-    refFc2 = refFc2Str.toFloat();
-    refFc3 = refFc3Str.toFloat();
-    
-    if (isRetreat) {
-        refVelo1 *= RETREAT_VELOCITY_SCALE;
-        refVelo2 *= RETREAT_VELOCITY_SCALE;
-        refVelo3 *= RETREAT_VELOCITY_SCALE;
+    // Only update trajectory if NOT paused
+    if (!trajectoryPaused) {
+        refPos1 = refPos1Str.toFloat();
+        refPos2 = refPos2Str.toFloat();
+        refPos3 = refPos3Str.toFloat();
+        refVelo1 = refVelo1Str.toFloat();
+        refVelo2 = refVelo2Str.toFloat();
+        refVelo3 = refVelo3Str.toFloat();
+        refFc1 = refFc1Str.toFloat();
+        refFc2 = refFc2Str.toFloat();
+        refFc3 = refFc3Str.toFloat();
+        
+        if (isRetreat) {
+            refVelo1 *= RETREAT_VELOCITY_SCALE;
+            refVelo2 *= RETREAT_VELOCITY_SCALE;
+            refVelo3 *= RETREAT_VELOCITY_SCALE;
+        }
+    }
+    // If paused, store the incoming trajectory but don't apply it yet
+    else {
+        pausedRefPos1 = refPos1Str.toFloat();
+        pausedRefPos2 = refPos2Str.toFloat();
+        pausedRefPos3 = refPos3Str.toFloat();
+        pausedRefVelo1 = refVelo1Str.toFloat();
+        pausedRefVelo2 = refVelo2Str.toFloat();
+        pausedRefVelo3 = refVelo3Str.toFloat();
+        pausedRefFc1 = refFc1Str.toFloat();
+        pausedRefFc2 = refFc2Str.toFloat();
+        pausedRefFc3 = refFc3Str.toFloat();
+        
+        if (isRetreat) {
+            pausedRefVelo1 *= RETREAT_VELOCITY_SCALE;
+            pausedRefVelo2 *= RETREAT_VELOCITY_SCALE;
+            pausedRefVelo3 *= RETREAT_VELOCITY_SCALE;
+        }
     }
 }
 
@@ -478,6 +511,7 @@ void resetSystem() {
     manipulatorState = 0;
     retreatHasBeenTriggered = false;
     retreatRequestSent = false;
+    trajectoryPaused = false;
     
     analogWrite(RPWM1, 0); analogWrite(LPWM1, 0);
     analogWrite(RPWM2, 0); analogWrite(LPWM2, 0);
@@ -840,6 +874,16 @@ void loop() {
             else if (receivedData.startsWith("ADM") && receivedData.indexOf(',') > 0) {
                 parseAdmittanceParams(receivedData);
             }
+            else if (receivedData.startsWith("PAUSE_THRESHOLD")) {
+                // Format: PAUSE_THRESHOLD,5.0
+                String data = receivedData;
+                data.replace("PAUSE_THRESHOLD,", "");
+                float newThreshold = data.toFloat();
+                // Can't modify const, so this is just for future implementation
+                Serial.print("Pause threshold would be: ");
+                Serial.println(newThreshold);
+                Serial.println("(Recompile to change FORCE_PAUSE_THRESHOLD)");
+            }
             else if (receivedData == "ADMITTANCE_STATUS") {
                 Serial.println("\n=== Admittance Control Status ===");
                 Serial.print("Enabled: ");
@@ -920,6 +964,45 @@ void loop() {
             
             // Update admittance dynamics
             updateAdmittanceControl(F_external, dt);
+            
+            // CHECK IF TRAJECTORY SHOULD BE PAUSED
+            if (F_external > FORCE_PAUSE_THRESHOLD && !trajectoryPaused) {
+                // Start pausing trajectory
+                trajectoryPaused = true;
+                
+                // Save current trajectory reference (freeze it)
+                pausedRefPos1 = refPos1;
+                pausedRefPos2 = refPos2;
+                pausedRefPos3 = refPos3;
+                pausedRefVelo1 = refVelo1;
+                pausedRefVelo2 = refVelo2;
+                pausedRefVelo3 = refVelo3;
+                pausedRefFc1 = refFc1;
+                pausedRefFc2 = refFc2;
+                pausedRefFc3 = refFc3;
+                
+                // Notify that trajectory is paused
+                Serial.println("TRAJECTORY_PAUSED");
+            }
+            // CHECK IF TRAJECTORY CAN RESUME
+            else if (F_external <= FORCE_PAUSE_THRESHOLD && trajectoryPaused) {
+                // Resume trajectory from paused position
+                trajectoryPaused = false;
+                
+                // Keep the paused reference (don't jump)
+                refPos1 = pausedRefPos1;
+                refPos2 = pausedRefPos2;
+                refPos3 = pausedRefPos3;
+                refVelo1 = 0.0;  // Start with zero velocity
+                refVelo2 = 0.0;
+                refVelo3 = 0.0;
+                refFc1 = pausedRefFc1;
+                refFc2 = pausedRefFc2;
+                refFc3 = pausedRefFc3;
+                
+                // Notify that trajectory resumed
+                Serial.println("TRAJECTORY_RESUMED");
+            }
             
             lastAdmittanceTime = currentTime;
         }
@@ -1006,6 +1089,8 @@ void loop() {
                 Serial.print(Zdot_adm * 1000, 3);  // mm/s
                 Serial.print(",Zddot:");
                 Serial.print(Zddot_adm * 1000, 3);  // mm/s²
+                Serial.print(",traj_paused:");
+                Serial.print(trajectoryPaused ? "1" : "0");
             }
             
             Serial.println("");
