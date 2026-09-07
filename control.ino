@@ -2,13 +2,14 @@
  * ============================================================
  *  3-RPS PARALLEL ROBOT — ADMITTANCE CONTROL SYSTEM
  * ============================================================
- *  Model   : Hill-Zajac Muscle Model (Zajac 1989)
  *  Control : Admittance (M=0, First-Order) + CTC + PD
  *  Integrator : Backward Euler
  *
- *  K & B dinamis dari Hill-Zajac:
- *    K = (1-a) * F_MAX * fv(0) * |fl'(l0)|
- *    B = (1-a) * F_MAX * fl(l0) * |fv'(0)|
+ *  K & B STATIS (direvisi dari Hill-Zajac dinamis atas arahan dosen):
+ *    B*Z' + K*Z = F_ext, dengan K & B konstan (time-invariant)
+ *    Diturunkan numerik dari Zajac 1989 berdasarkan ROM latihan aktual
+ *    (dorsofleksi 20-30°, plantarfleksi 38-46°), dgn koreksi gearing tendon:
+ *    K ≈ 15556 N/m, B ≈ 7272 N.s/m (lihat komentar di deklarasi K_adm/B_adm)
  *
  *  Retreat trigger (soft):
  *    yank = (F_k - F_{k-1}) / Ts   [backward difference, Ts=0.1s]
@@ -24,6 +25,8 @@
  *    K<motor,kp,kd>                  Set outer loop gains
  *    P<motor,kpc,kdc>                Set inner loop gains
  *    ADM,G,<val>                     Set admittance gain
+ *    ADM,K,<val>                     Set static admittance stiffness K
+ *    ADM,B,<val>                     Set static admittance damping B
  *    ADMITTANCE_ON / OFF / RESET     Admittance toggle
  *    ADMITTANCE_STATUS               Print admittance state
  * ============================================================
@@ -139,30 +142,37 @@ float Z_adm      = 0.0;   // Virtual displacement (m)
 float Zdot_adm   = 0.0;   // Virtual velocity (m/s)
 float Z_adm_prev = 0.0;
 
-float B_adm = 500.0;   // Virtual damping  (N.s/m) — set by Hill-Zajac
-float K_adm = 614.1;   // Virtual stiffness (N/m)  — set by Hill-Zajac
+// K & B STATIS — konstan selama runtime, tidak lagi fungsi dari F_ext/aktivasi.
+// Diturunkan dari Hill-Zajac (Zajac 1989) di SATU titik operasi tetap, berdasarkan
+// ROM latihan aktual robot (dorsofleksi 20.3-29.8°, plantarfleksi 37.6-45.8°):
+//
+//   K = (a*F0/l0) * fL'(l~) * fv(0)
+//   B = (a*F0/Vmax) * fL(l~) * |fv'(0)|
+//
+//   fL(l~)  = exp(-(l~-1)^2 / Kact),           Kact = 0.5   (Thelen 2003 / OpenSim)
+//   fv(v~)  = Af(1+Af)/(v~+Af) - Af,            Af   = 0.3   -> fv'(0) = -4.333
+//
+//   l~ dihitung dari ROM: Δl = r*Δθ*g  (r=moment arm, Δθ=setengah total sweep
+//   ROM=33.375°=0.5826rad, g=faktor gearing tendon->fascicle)
+//   Parameter (Delp 1990 untuk F0/l0; Maganaris 1999 untuk moment arm r;
+//   Hoang et al. untuk gearing triceps surae ~27-35% krn Achilles tendon compliant):
+//     Tibialis Anterior : F0=603N,  l0=0.098m,  r=0.035m, g=1.0  -> l~=0.792
+//     Triceps Surae     : F0=4440N, l0=0.0375m, r=0.050m, g=0.30 -> l~=0.767
+//     (TA tendon relatif kaku -> g~1; Achilles tendon panjang & lentur -> g~0.3,
+//      tanpa koreksi ini l~ jatuh ke 0.22, di luar jangkauan valid kurva fL Gaussian)
+//   a (aktivasi nominal) = 0.3, Vmax = 10*l0/s (asumsi Zajac/Winters)
+//
+//   Hasil: K_TA=1410, K_tri=29703 N/m | B_TA=734, B_tri=13810 N.s/m
+//   -> K_adm ≈ 15556 N/m, B_adm ≈ 7272 N.s/m, tau=B/K ≈ 0.47s
+//
+//   Tune manual di sini kalau ROM/asumsi berubah, atau runtime via
+//   serial: ADM,K,<val> / ADM,B,<val>. Valid selama load cell terkalibrasi ke N
+//   dan Z_adm konsisten dalam meter (dikonversi ke mm hanya di calculateCTCWithAdmittance).
+float B_adm = 7272.0;   // Virtual damping  (N.s/m)
+float K_adm = 15556.0;  // Virtual stiffness (N/m)
 
-// ============================================================
-//  HILL-ZAJAC MUSCLE MODEL  (Zajac 1989)
-//  Compliance prinsip:
-//    F kecil → a kecil → a_inv besar → K & B besar (kaku)
-//    F besar → a besar → a_inv kecil → K & B kecil (compliant)
-// ============================================================
-const float F_MAX    = 6000.0;
-const float FL_OPT   = 1.0;
-const float FV_ZERO  = 1.0;
-const float FL_SLOPE = 4.0;
-const float FV_SLOPE = 4.7;
-const float K_MIN    = 50.0;    // Lebih compliant sejak awal kontak
-const float B_MIN    = 30.0;
-const float K_SCALE  = 0.035;   // Naikkan agar K turun lebih cepat saat ada gaya
-const float B_SCALE  = 0.025;
-const float ACT_POWER = 0.5;    // sqrt(a): aktivasi lebih awal saat gaya kecil
-
-// Hill-Zajac monitoring
-float currentActivation = 0.0;
-float currentK = 614.1;
-float currentB = 500.0;
+const float B_ADM_DEFAULT = 7272.0;    // Dipakai saat ADMITTANCE_RESET
+const float K_ADM_DEFAULT = 15556.0;
 
 // ============================================================
 //  TRAJECTORY PAUSE  (saat F_ext > FORCE_PAUSE_THRESHOLD)
@@ -312,22 +322,6 @@ void updateYank(float F_curr) {
 }
 
 // ============================================================
-//  HILL-ZAJAC MUSCLE MODEL
-// ============================================================
-void updateMuscleAdmittance(float F_external) {
-    float a_lin = constrain(F_external / LOAD_MAX, 0.0, 1.0);
-    float a     = pow(a_lin, ACT_POWER);   // Lebih compliant sejak gaya kecil
-    float a_inv = 1.0 - a;
-
-    K_adm = max(a_inv * F_MAX * FV_ZERO * FL_SLOPE * K_SCALE, K_MIN);
-    B_adm = max(a_inv * F_MAX * FL_OPT  * FV_SLOPE * B_SCALE, B_MIN);
-
-    currentActivation = a;
-    currentK = K_adm;
-    currentB = B_adm;
-}
-
-// ============================================================
 //  ADMITTANCE CONTROL  (M=0, Backward Euler)
 // ============================================================
 void updateAdmittanceControl(float F_external, float dt) {
@@ -344,9 +338,7 @@ void updateAdmittanceControl(float F_external, float dt) {
 void resetAdmittance() {
     Z_adm = 0.0; Z_adm_prev = 0.0;
     Zdot_adm = 0.0;
-    K_adm = 614.1; B_adm = 500.0;
-    currentK = 614.1; currentB = 500.0;
-    currentActivation = 0.0;
+    K_adm = K_ADM_DEFAULT; B_adm = B_ADM_DEFAULT;
     yank = 0.0; F_prev = 0.0;
     yankPauseUntil = 0;
 }
@@ -466,7 +458,8 @@ void parseInnerLoopGains(String data) {
 }
 
 void parseAdmittanceParams(String data) {
-    // Format: ADM,G,<val>   (only gain is tunable; K & B = Hill-Zajac)
+    // Format: ADM,G,<val>  |  ADM,K,<val>  |  ADM,B,<val>
+    // K & B statis (time-invariant), tunable manual via serial ini.
     data.replace("ADM", "");
     int c = data.indexOf(',');
     String param = data.substring(0, c);
@@ -475,9 +468,14 @@ void parseAdmittanceParams(String data) {
     if (param == "G") {
         admittanceGain = val;
         Serial.print("Admittance gain = "); Serial.println(admittanceGain);
+    } else if (param == "K") {
+        K_adm = val;
+        Serial.print("Admittance K (statis) = "); Serial.println(K_adm);
+    } else if (param == "B") {
+        B_adm = val;
+        Serial.print("Admittance B (statis) = "); Serial.println(B_adm);
     } else {
-        Serial.println("ERR: Unknown ADM param. Use ADM,G,<val>");
-        Serial.println("     K & B dikontrol Hill-Zajac via K_SCALE/B_SCALE");
+        Serial.println("ERR: Unknown ADM param. Use ADM,G / ADM,K / ADM,B ,<val>");
     }
 }
 
@@ -676,10 +674,9 @@ void sendTelemetry() {
     Serial.print(F(",pwm2:")); Serial.print(controlValue2, 0);
     Serial.print(F(",pwm3:")); Serial.print(controlValue3, 0);
     if (isAdmittanceActive()) {
-        Serial.print(F(",act:"));  Serial.print(currentActivation, 3);
-        Serial.print(F(",K:"));    Serial.print(currentK, 2);
-        Serial.print(F(",B:"));    Serial.print(currentB, 2);
-        Serial.print(F(",tau:"));  Serial.print(currentB / currentK, 4);
+        Serial.print(F(",K:"));    Serial.print(K_adm, 2);
+        Serial.print(F(",B:"));    Serial.print(B_adm, 2);
+        Serial.print(F(",tau:"));  Serial.print(B_adm / K_adm, 4);
         Serial.print(F(",Z:"));    Serial.print(Z_adm * 1000, 3);
         Serial.print(F(",Zd:"));   Serial.print(Zdot_adm * 1000, 3);
         Serial.print(F(",tpause:")); Serial.print(trajectoryPaused ? 1 : 0);
@@ -861,10 +858,9 @@ void loop() {
                 else if (receivedData == "ADMITTANCE_STATUS") {
                     Serial.println(F("\n=== Admittance Status ==="));
                     Serial.print(F("Enabled    : ")); Serial.println(admittanceEnabled ? "YES" : "NO");
-                    Serial.print(F("Activation : ")); Serial.println(currentActivation, 4);
-                    Serial.print(F("K_adm      : ")); Serial.print(currentK, 2); Serial.println(F(" N/m"));
-                    Serial.print(F("B_adm      : ")); Serial.print(currentB, 2); Serial.println(F(" N.s/m"));
-                    Serial.print(F("tau (B/K)  : ")); Serial.print(currentB / currentK, 4); Serial.println(F(" s"));
+                    Serial.print(F("K_adm      : ")); Serial.print(K_adm, 2); Serial.println(F(" N/m (statis)"));
+                    Serial.print(F("B_adm      : ")); Serial.print(B_adm, 2); Serial.println(F(" N.s/m (statis)"));
+                    Serial.print(F("tau (B/K)  : ")); Serial.print(B_adm / K_adm, 4); Serial.println(F(" s"));
                     Serial.print(F("Z_adm      : ")); Serial.print(Z_adm * 1000, 4); Serial.println(F(" mm"));
                     Serial.print(F("Zdot_adm   : ")); Serial.print(Zdot_adm * 1000, 4); Serial.println(F(" mm/s"));
                     Serial.print(F("F_ext      : ")); Serial.print(latestValidLoad, 2); Serial.println(F(" unit"));
@@ -937,7 +933,6 @@ void loop() {
             readLoadCellIfReady(load);   // Update load setiap 10ms jika tersedia
 
             float dt = INTERVAL_ADMITTANCE / 1000.0;
-            updateMuscleAdmittance(load);
             updateAdmittanceControl(load, dt);
 
             // Decay Z_adm saat gaya turun agar resume lebih cepat
