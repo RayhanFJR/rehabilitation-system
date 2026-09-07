@@ -28,7 +28,9 @@ $$B = \frac{\partial F^M}{\partial v}\Bigg|_{\tilde{l},\,\tilde{v}} = \frac{a F_
 
 Kurva force-length aktif didekati dengan fungsi Gaussian (Thelen, 2003; digunakan sebagai standar pada OpenSim):
 
-$$f_L(\tilde{l}) = \exp\!\left(-\frac{(\tilde{l}-1)^2}{K_{act}}\right), \qquad K_{act} = 0.5 \tag{5}$$
+$$f_L(\tilde{l}) = \exp\left(-\frac{(\tilde{l}-1)^2}{K_{act}}\right) \tag{5}$$
+
+dengan $K_{act} = 0.5$.
 
 $$f_L'(\tilde{l}) = -\frac{2(\tilde{l}-1)}{K_{act}}\, f_L(\tilde{l}) \tag{6}$$
 
@@ -38,13 +40,15 @@ $$f_L'(\tilde{l}) = -\frac{2(\tilde{l}-1)}{K_{act}}\, f_L(\tilde{l}) \tag{6}$$
 
 Kurva force-velocity mengikuti persamaan hiperbola Hill dalam bentuk ternormalisasi:
 
-$$f_v(\tilde{v}) = \frac{A_f(1+A_f)}{\tilde{v}+A_f} - A_f, \qquad A_f = 0.3 \tag{7}$$
+$$f_v(\tilde{v}) = \frac{A_f(1+A_f)}{\tilde{v}+A_f} - A_f \tag{7}$$
+
+dengan $A_f = 0.3$.
 
 Pada kondisi isometrik ($\tilde{v}=0$): $f_v(0) = 1$ (terverifikasi dari substitusi persamaan 7). Turunannya:
 
-$$f_v'(\tilde{v}) = -\frac{A_f(1+A_f)}{(\tilde{v}+A_f)^2} \tag{8a}$$
+$$f_v'(\tilde{v}) = -\frac{A_f(1+A_f)}{(\tilde{v}+A_f)^2} \tag{8}$$
 
-$$f_v'(0) = -\frac{1+A_f}{A_f} = -4.333 \tag{8b}$$
+Pada $\tilde{v}=0$: $f_v'(0) = -(1+A_f)/A_f = -4.333$.
 
 ## 3. Parameter Fisiologis
 
@@ -61,7 +65,9 @@ Untuk kelompok plantarfleksor (triceps surae = gastrocnemius medial + lateral + 
 
 $$F_{0,triceps} = \sum F_0 = 4440 \text{ N} \tag{9}$$
 
-$$l_{0,triceps} = \frac{\sum F_{0,i}\, l_{0,i}}{\sum F_{0,i}} = 0.0375 \text{ m} \quad\text{(rata-rata terbobot gaya)} \tag{10}$$
+$$l_{0,triceps} = \frac{\sum F_{0,i}\, l_{0,i}}{\sum F_{0,i}} = 0.0375 \text{ m} \tag{10}$$
+
+(rata-rata terbobot gaya)
 
 Kecepatan kontraksi maksimal diasumsikan mengikuti pendekatan standar Zajac/Winters:
 
@@ -77,9 +83,7 @@ Nilai statis $K$ dan $B$ memerlukan satu titik operasi tetap sebagai dasar linea
 
 ## 5. Perhitungan
 
-Dengan $\tilde{l}=0.80$:
-
-$$f_L(0.80) = \exp(-0.08) = 0.9231, \qquad f_L'(0.80) = 0.7385$$
+Dengan $\tilde{l}=0.80$, diperoleh $f_L(0.80) = \exp(-0.08) = 0.9231$ dan $f_L'(0.80) = 0.7385$.
 
 **Tibialis Anterior:**
 
@@ -105,9 +109,9 @@ $$\tau = \frac{B_{adm}}{K_{adm}} \approx 0.54 \text{ s}$$
 
 Persamaan (1) dapat ditulis ulang sebagai sistem orde pertama standar:
 
-$$\dot{Z} + \frac{1}{\tau} Z = \frac{F_{ext}}{B} \tag{12a}$$
+$$\dot{Z} + \frac{1}{\tau} Z = \frac{F_{ext}}{B} \tag{12}$$
 
-$$\tau = \frac{B}{K} \tag{12b}$$
+dengan $\tau = B/K$.
 
 Untuk masukan gaya konstan (step), respons perpindahan virtual adalah $Z(t) = Z_{ss}(1-e^{-t/\tau})$ dengan $Z_{ss}=F_{ext}/K$. Nilai $\tau \approx 0.54$ s berarti waktu settling (≈98%) sekitar $4\tau \approx 2.2$ s — cukup responsif untuk kontrol admittance real-time pada perangkat keras ini.
 
