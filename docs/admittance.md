@@ -20,15 +20,15 @@ dengan $F_0$ adalah gaya isometrik maksimal otot (N), $a(t) \in [0,1]$ aktivasi 
 
 Kekakuan dan redaman lokal di sekitar suatu titik operasi diperoleh melalui linearisasi (turunan parsial) persamaan (2) terhadap panjang dan kecepatan (Sartori et al., dikutip dalam Millard et al., 2023):
 
-$$K = \left.\frac{\partial F^M}{\partial l}\right|_{\tilde{l},\tilde{v}} = \frac{a F_0}{l_0}\, f_L'(\tilde{l})\, f_v(\tilde{v}) \tag{3}$$
+$$K = \frac{\partial F^M}{\partial l}\Bigg|_{\tilde{l},\,\tilde{v}} = \frac{a F_0}{l_0}\, f_L'(\tilde{l})\, f_v(\tilde{v}) \tag{3}$$
 
-$$B = \left.\frac{\partial F^M}{\partial v}\right|_{\tilde{l},\tilde{v}} = \frac{a F_0}{v_{max}}\, f_L(\tilde{l})\, f_v'(\tilde{v}) \tag{4}$$
+$$B = \frac{\partial F^M}{\partial v}\Bigg|_{\tilde{l},\,\tilde{v}} = \frac{a F_0}{v_{max}}\, f_L(\tilde{l})\, f_v'(\tilde{v}) \tag{4}$$
 
 ### 2.1 Kurva Force-Length
 
 Kurva force-length aktif didekati dengan fungsi Gaussian (Thelen, 2003; digunakan sebagai standar pada OpenSim):
 
-$$f_L(\tilde{l}) = \exp\left(-\frac{(\tilde{l}-1)^2}{K_{act}}\right), \qquad K_{act} = 0.5 \tag{5}$$
+$$f_L(\tilde{l}) = \exp\!\left(-\frac{(\tilde{l}-1)^2}{K_{act}}\right), \qquad K_{act} = 0.5 \tag{5}$$
 
 $$f_L'(\tilde{l}) = -\frac{2(\tilde{l}-1)}{K_{act}}\, f_L(\tilde{l}) \tag{6}$$
 
@@ -42,7 +42,9 @@ $$f_v(\tilde{v}) = \frac{A_f(1+A_f)}{\tilde{v}+A_f} - A_f, \qquad A_f = 0.3 \tag
 
 Pada kondisi isometrik ($\tilde{v}=0$): $f_v(0) = 1$ (terverifikasi dari substitusi persamaan 7). Turunannya:
 
-$$f_v'(\tilde{v}) = -\frac{A_f(1+A_f)}{(\tilde{v}+A_f)^2} \quad\Rightarrow\quad f_v'(0) = -\frac{1+A_f}{A_f} = -4.333 \tag{8}$$
+$$f_v'(\tilde{v}) = -\frac{A_f(1+A_f)}{(\tilde{v}+A_f)^2} \tag{8a}$$
+
+$$f_v'(0) = -\frac{1+A_f}{A_f} = -4.333 \tag{8b}$$
 
 ## 3. Parameter Fisiologis
 
@@ -57,13 +59,13 @@ Parameter otot diambil dari basis data Delp et al. (1990), yang umum digunakan p
 
 Untuk kelompok plantarfleksor (triceps surae = gastrocnemius medial + lateral + soleus), $F_0$ dan $l_0$ digabung:
 
-$$F_{0,triceps} = \sum F_0 = 4440 \text{ N}$$
+$$F_{0,triceps} = \sum F_0 = 4440 \text{ N} \tag{9}$$
 
-$$l_{0,triceps} = \frac{\sum F_{0,i}\, l_{0,i}}{\sum F_{0,i}} = 0.0375 \text{ m (rata-rata terbobot gaya)}$$
+$$l_{0,triceps} = \frac{\sum F_{0,i}\, l_{0,i}}{\sum F_{0,i}} = 0.0375 \text{ m} \quad\text{(rata-rata terbobot gaya)} \tag{10}$$
 
 Kecepatan kontraksi maksimal diasumsikan mengikuti pendekatan standar Zajac/Winters:
 
-$$v_{max} = 10\, l_0 \; \text{/s} \tag{9}$$
+$$v_{max} = 10\, l_0 \text{ /s} \tag{11}$$
 
 ## 4. Titik Operasi
 
@@ -75,14 +77,20 @@ Nilai statis $K$ dan $B$ memerlukan satu titik operasi tetap sebagai dasar linea
 
 ## 5. Perhitungan
 
-Dengan $\tilde{l}=0.80$: $f_L(0.80) = \exp(-0.08) = 0.9231$, $f_L'(0.80) = 0.7385$.
+Dengan $\tilde{l}=0.80$:
+
+$$f_L(0.80) = \exp(-0.08) = 0.9231, \qquad f_L'(0.80) = 0.7385$$
 
 **Tibialis Anterior:**
+
 $$K_{TA} = \frac{0.3 \times 603}{0.098} \times 0.7385 \times 1 = 1364.0 \text{ N/m}$$
+
 $$B_{TA} = \frac{0.3 \times 603}{0.98} \times 0.9231 \times 4.333 = 738.4 \text{ N·s/m}$$
 
 **Triceps Surae:**
+
 $$K_{tri} = \frac{0.3 \times 4440}{0.0375} \times 0.7385 \times 1 = 26236.9 \text{ N/m}$$
+
 $$B_{tri} = \frac{0.3 \times 4440}{0.375} \times 0.9231 \times 4.333 = 14208.4 \text{ N·s/m}$$
 
 Nilai statis akhir diambil sebagai rata-rata dorsofleksor–plantarfleksor:
@@ -97,11 +105,13 @@ $$\tau = \frac{B_{adm}}{K_{adm}} \approx 0.54 \text{ s}$$
 
 Persamaan (1) dapat ditulis ulang sebagai sistem orde pertama standar:
 
-$$\dot{Z} + \frac{1}{\tau} Z = \frac{F_{ext}}{B}, \qquad \tau = \frac{B}{K} \tag{10}$$
+$$\dot{Z} + \frac{1}{\tau} Z = \frac{F_{ext}}{B} \tag{12a}$$
+
+$$\tau = \frac{B}{K} \tag{12b}$$
 
 Untuk masukan gaya konstan (step), respons perpindahan virtual adalah $Z(t) = Z_{ss}(1-e^{-t/\tau})$ dengan $Z_{ss}=F_{ext}/K$. Nilai $\tau \approx 0.54$ s berarti waktu settling (≈98%) sekitar $4\tau \approx 2.2$ s — cukup responsif untuk kontrol admittance real-time pada perangkat keras ini.
 
-Perlu dicatat, parameter aktivasi $a$ muncul pada pembilang $K$ maupun $B$, sehingga tereliminasi pada rasio $\tau=B/K$. Nilai $\tau$ murni ditentukan oleh $l_0/v_{max}$ (tetap $0.1$ s untuk asumsi persamaan 9) dan rasio $f_L(\tilde{l})/f_L'(\tilde{l})$, yang bergantung pada seberapa jauh titik evaluasi $\tilde{l}$ dari $l_0$.
+Perlu dicatat, parameter aktivasi $a$ muncul pada pembilang $K$ maupun $B$, sehingga tereliminasi pada rasio $\tau=B/K$. Nilai $\tau$ murni ditentukan oleh $l_0/v_{max}$ (tetap $0.1$ s untuk asumsi persamaan 11) dan rasio $f_L(\tilde{l})/f_L'(\tilde{l})$, yang bergantung pada seberapa jauh titik evaluasi $\tilde{l}$ dari $l_0$.
 
 ## 7. Keterbatasan dan Asumsi yang Perlu Dijustifikasi
 
